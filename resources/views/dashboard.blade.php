@@ -11,7 +11,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {{-- 左側: 進捗ドーナツチャート（3/12幅） --}}
-                <div class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                <div class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 self-start">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                         <x-icon name="chart-pie" class="w-5 h-5 text-lask-1" />
                         今日の進捗
@@ -127,6 +127,25 @@
                             </button>
                         </div>
 
+                        {{-- 完了率プログレスバー --}}
+                        <div class="w-full mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-400">完了率</span>
+                                <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ $progress['completion_rate'] }}%</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div 
+                                    class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500 ease-out"
+                                    style="width: {{ $progress['completion_rate'] }}%"
+                                ></div>
+                            </div>
+                            @if ($progress['total'] > 0)
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 text-center">
+                                    {{ $progress['completed'] }} / {{ $progress['total'] }} タスク完了
+                                </p>
+                            @endif
+                        </div>
+
                         {{-- ポップアップ --}}
                         <div 
                             x-show="activePopup !== null"
@@ -177,8 +196,21 @@
                             </a>
                         </div>
                     @else
+                        @php
+                            // 完了・スキップタスクを下に表示するためにソート
+                            $sortedPlans = $todayPlans->sortBy(function($plan) {
+                                // 未完了タスクを上に（0-1）、完了系を下に（2-3）
+                                return match($plan->status) {
+                                    'in_progress' => 0,  // 進行中が最上位
+                                    'planned' => 1,      // 予定が次
+                                    'completed' => 2,    // 完了は下
+                                    'skipped' => 3,      // スキップは最下位
+                                    default => 1,
+                                };
+                            });
+                        @endphp
                         <div class="space-y-3 p-3">
-                            @foreach ($todayPlans->take(6) as $plan)
+                            @foreach ($sortedPlans->take(6) as $plan)
                                 <x-plan-block :plan="$plan" />
                             @endforeach
                         </div>
