@@ -1,6 +1,7 @@
 services:
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
+        platform: linux/x86_64
         links:
             - mysql:mysql
         ports:

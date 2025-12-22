@@ -11,7 +11,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {{-- 左側: 進捗ドーナツチャート（3/12幅） --}}
-                <div class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                <div class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 self-start">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                         <x-icon name="chart-pie" class="w-5 h-5 text-lask-1" />
                         今日の進捗
