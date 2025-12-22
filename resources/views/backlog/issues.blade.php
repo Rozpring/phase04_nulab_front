@@ -158,25 +158,55 @@
                                 インポート済み
                             </h3>
                         </div>
-                        <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-[28rem] overflow-y-auto">
                             @forelse ($importedIssues as $issue)
-                                <div class="p-4">
-                                    <div class="flex items-center gap-2 mb-1">
+                                <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                                    <div class="flex items-center gap-2 mb-1.5">
                                         <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ $issue->issue_key }}</span>
+                                        @if ($issue->priority)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                                {{ $issue->priority === '高' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300' : '' }}
+                                                {{ $issue->priority === '中' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' : '' }}
+                                                {{ $issue->priority === '低' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : '' }}
+                                            ">
+                                                {{ $issue->priority }}
+                                            </span>
+                                        @endif
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $issue->status_color_class }}">
+                                            {{ $issue->status }}
+                                        </span>
                                         @if ($issue->is_overdue)
-                                            <span class="text-xs text-rose-600 dark:text-rose-400 font-medium">期限切れ</span>
+                                            <span class="text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-0.5">
+                                                <x-icon name="exclamation-circle" class="w-3 h-3" />
+                                                期限切れ
+                                            </span>
                                         @endif
                                     </div>
                                     <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{{ $issue->summary }}</h4>
-                                    @if ($issue->due_date)
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            期限: {{ $issue->due_date->year != now()->year ? $issue->due_date->format('Y/m/d') : $issue->due_date->format('m/d') }}
-                                        </p>
-                                    @endif
+                                    <div class="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        @if ($issue->due_date)
+                                            <span class="flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                {{ $issue->due_date->year != now()->year ? $issue->due_date->format('Y/m/d') : $issue->due_date->format('m/d') }}
+                                            </span>
+                                        @endif
+                                        @if ($issue->estimated_hours)
+                                            <span class="flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                {{ $issue->estimated_hours }}h
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
                             @empty
-                                <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-                                    <p class="text-sm">まだインポートされた課題はありません</p>
+                                <div class="p-8 text-center">
+                                    <x-icon name="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">まだインポートされた課題はありません</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">左側のリストから課題を選択してインポートしてください</p>
                                 </div>
                             @endforelse
                         </div>

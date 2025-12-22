@@ -6,7 +6,7 @@
 
 <div 
     x-data="kanbanBoard()"
-    {{ $attributes->merge(['class' => 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4']) }}
+    {{ $attributes->merge(['class' => 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6']) }}
 >
     {{-- 予定カラム --}}
     <div class="rounded-xl border-2 transition-all duration-200 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600"
@@ -18,7 +18,7 @@
                       x-text="getPlansForStatus('planned').length"></span>
             </div>
         </div>
-        <div class="p-2 min-h-[200px] space-y-2" id="column-planned" data-status="planned" x-init="initColumn('planned')">
+        <div class="p-3 min-h-[200px] space-y-3" id="column-planned" data-status="planned" x-init="initColumn('planned')">
             <template x-for="plan in getPlansForStatus('planned')" :key="plan.id">
                 <div class="kanban-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing"
                      :data-id="plan.id"
@@ -33,7 +33,7 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="plan.scheduled_time + ' - ' + plan.end_time"></p>
                             </div>
                         </div>
-                        <div class="mt-2 flex items-center gap-1">
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
                             <button @click="changeStatus(plan.id, 'in_progress')"
                                     class="text-xs px-2 py-1 rounded bg-lask-accent-subtle text-lask-1 hover:bg-lask-accent/20 transition">
                                 ▶ 開始
@@ -68,7 +68,7 @@
                       x-text="getPlansForStatus('in_progress').length"></span>
             </div>
         </div>
-        <div class="p-2 min-h-[200px] space-y-2" id="column-in_progress" data-status="in_progress">
+        <div class="p-3 min-h-[200px] space-y-3" id="column-in_progress" data-status="in_progress">
             <template x-for="plan in getPlansForStatus('in_progress')" :key="plan.id">
                 <div class="kanban-card bg-white dark:bg-gray-800 rounded-lg border-2 border-lask-1 shadow-sm hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing relative"
                      :data-id="plan.id"
@@ -104,7 +104,7 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="plan.scheduled_time + ' - ' + plan.end_time"></p>
                             </div>
                         </div>
-                        <div class="mt-2 flex items-center gap-1">
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
                             <button @click="changeStatus(plan.id, 'completed')"
                                     class="text-xs px-2 py-1 rounded bg-lask-success-light text-lask-success hover:bg-lask-success/20 transition">
                                 <svg class="w-3 h-3 inline mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -140,7 +140,7 @@
                       x-text="getPlansForStatus('completed').length"></span>
             </div>
         </div>
-        <div class="p-2 min-h-[200px] space-y-2" id="column-completed" data-status="completed">
+        <div class="p-3 min-h-[200px] space-y-3" id="column-completed" data-status="completed">
             <template x-for="plan in getPlansForStatus('completed')" :key="plan.id">
                 <div class="kanban-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
                      :data-id="plan.id"
@@ -155,7 +155,7 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="plan.scheduled_time + ' - ' + plan.end_time"></p>
                             </div>
                         </div>
-                        <div class="mt-2">
+                        <div class="mt-3">
                             <button @click="changeStatus(plan.id, 'planned')"
                                     class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition">
                                 ↩ 予定に戻す
@@ -184,7 +184,7 @@
                       x-text="getPlansForStatus('skipped').length"></span>
             </div>
         </div>
-        <div class="p-2 min-h-[200px] space-y-2" id="column-skipped" data-status="skipped">
+        <div class="p-3 min-h-[200px] space-y-3" id="column-skipped" data-status="skipped">
             <template x-for="plan in getPlansForStatus('skipped')" :key="plan.id">
                 <div class="kanban-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
                      :data-id="plan.id"
@@ -199,7 +199,7 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="plan.scheduled_time + ' - ' + plan.end_time"></p>
                             </div>
                         </div>
-                        <div class="mt-2">
+                        <div class="mt-3">
                             <button @click="changeStatus(plan.id, 'planned')"
                                     class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition">
                                 ↩ 予定に戻す
