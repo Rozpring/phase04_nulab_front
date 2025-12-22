@@ -1,12 +1,13 @@
 @props(['plan'])
 
 @php
-    // テーマ連動カラー - 補色パレット使用
+    // タイプ別背景色 - 統一感のある薄い背景色
+    // 全タイプで同程度の薄さを維持し、視覚的な一貫性を確保
     $typeColors = [
-        'study' => 'bg-lask-accent-subtle',       // 学習: テーマアクセント
-        'work' => 'bg-[var(--color-1)]/20',       // 作業: 補色1（濃い色）
-        'break' => 'bg-[var(--color-4)]/30',      // 休憩: 補色4（ベージュ/グレー系）
-        'review' => 'bg-[var(--color-3)]/25',     // 復習: 補色3（くすみ色）
+        'study' => 'bg-gray-100/80 dark:bg-gray-700/50',       // 学習: 薄いグレー
+        'work' => 'bg-gray-100/80 dark:bg-gray-700/50',        // 作業: 薄いグレー
+        'break' => 'bg-gray-100/60 dark:bg-gray-700/40',       // 休憩: さらに薄いグレー
+        'review' => 'bg-gray-100/80 dark:bg-gray-700/50',      // 復習: 薄いグレー
     ];
     $typeIcons = [
         'study' => 'book-open',
