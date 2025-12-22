@@ -158,7 +158,7 @@
                                 インポート済み
                             </h3>
                         </div>
-                        <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-[28rem] overflow-y-auto">
                             @forelse ($importedIssues as $issue)
                                 <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                                     <div class="flex items-center gap-2 mb-1.5">
@@ -203,8 +203,10 @@
                                     </div>
                                 </div>
                             @empty
-                                <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-                                    <p class="text-sm">まだインポートされた課題はありません</p>
+                                <div class="p-8 text-center">
+                                    <x-icon name="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">まだインポートされた課題はありません</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">左側のリストから課題を選択してインポートしてください</p>
                                 </div>
                             @endforelse
                         </div>
