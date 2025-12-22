@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             {{-- フラッシュメッセージ --}}
             @if (session('success'))
                 <div class="mb-6 p-4 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-400 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300 rounded-lg flex items-center gap-2">
