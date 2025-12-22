@@ -43,22 +43,22 @@
             @endif
 
             {{-- 統計カード --}}
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 mb-8">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
                     <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['pending_issues'] }}</div>
-                    <div class="text-lask-text-secondary text-sm">未消化の課題</div>
+                    <div class="text-lask-text-secondary text-sm mt-1">未消化の課題</div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
                     <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['today_plans'] }}</div>
-                    <div class="text-lask-text-secondary text-sm">今日の計画</div>
+                    <div class="text-lask-text-secondary text-sm mt-1">今日の計画</div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
                     <div class="text-3xl font-bold text-lask-text-primary">{{ number_format($stats['today_hours'], 1) }}h</div>
-                    <div class="text-lask-text-secondary text-sm">今日の学習時間</div>
+                    <div class="text-lask-text-secondary text-sm mt-1">今日の学習時間</div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
                     <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['week_plans'] }}</div>
-                    <div class="text-lask-text-secondary text-sm">今週の計画</div>
+                    <div class="text-lask-text-secondary text-sm mt-1">今週の計画</div>
                 </div>
             </div>
 
@@ -130,7 +130,7 @@
                                                         'review' => 'bg-[#2c3e50]',
                                                     ];
                                                 @endphp
-                                                <div class="h-7 {{ $colors[$plan->plan_type] ?? 'bg-gray-500' }} mb-1"></div>
+                                                <div class="h-5 {{ $colors[$plan->plan_type] ?? 'bg-gray-500' }} mb-0.5"></div>
                                             @endforeach
                                             @if ($dayPlans->count() > 3)
                                                 <div class="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
@@ -171,7 +171,7 @@
                                     </div>
                                 @endfor
                             </div>
-                            <div class="flex justify-center gap-6 mt-6 text-xs">
+                            <div class="flex justify-center gap-4 sm:gap-6 mt-5 text-xs">
                                 <div class="flex items-center gap-1">
                                     <div class="w-3 h-3 bg-lask-accent-subtle rounded"></div>
                                     <span class="text-lask-text-secondary">学習</span>
