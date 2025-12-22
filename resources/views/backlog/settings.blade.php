@@ -125,13 +125,8 @@
                     @endif
 
                     {{-- ボタン --}}
-                    <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center gap-3">
-                            <a href="{{ route('backlog.issues') }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
-                                課題をインポート →
-                            </a>
-                        </div>
-                        <div class="flex items-center gap-3">
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                        <div class="flex flex-col sm:flex-row items-center justify-end gap-3">
                             <button type="button" 
                                 x-data="{ testing: false, result: null }"
                                 @click="testing = true; result = null; 
@@ -143,7 +138,7 @@
                                     .then(r => r.json())
                                     .then(d => { result = d.success ? 'success' : 'error'; testing = false; })
                                     .catch(() => { result = 'error'; testing = false; })"
-                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
+                                class="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
                                 :disabled="testing"
                             >
                                 <svg x-show="testing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -163,12 +158,18 @@
                                     接続失敗
                                 </span>
                             </button>
-                            <x-primary-button>
+                            <x-primary-button class="w-full sm:w-auto justify-center">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
                                 設定を保存
                             </x-primary-button>
+                        </div>
+                        <div class="text-center">
+                            <a href="{{ route('backlog.issues') }}" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm">
+                                <x-icon name="arrow-right" class="w-4 h-4" />
+                                課題をインポートに進む
+                            </a>
                         </div>
                     </div>
                 </form>
