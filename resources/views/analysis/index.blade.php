@@ -136,7 +136,7 @@
                             <div class="relative">
 
                                 {{-- 棒グラフ --}}
-                                <div class="flex items-end justify-between gap-3 pt-10" style="height: 200px;">
+                                <div class="flex items-end justify-between gap-2 sm:gap-3 pt-10 min-h-[180px] sm:min-h-[200px] lg:min-h-[220px]">
                                     @foreach ($chartData as $index => $day)
                                         @php
                                             $total = $day['completed'] + $day['failed'];
@@ -174,10 +174,9 @@
                                                 </div>
                                             @endif
 
-                                            {{-- 棒グラフ本体 --}}
                                             <div 
                                                 class="w-full flex flex-col-reverse rounded-lg overflow-hidden {{ $isToday ? 'ring-2 ring-lask-accent ring-offset-2 dark:ring-offset-gray-800' : '' }}"
-                                                style="height: 140px; {{ $isToday ? 'background: var(--color-accent-subtle);' : '' }}"
+                                                style="height: 120px; {{ $isToday ? 'background: var(--color-accent-subtle);' : '' }}"
                                             >
                                                 @if ($hasData)
                                                     {{-- 完了バー（下に表示）- 緑色 --}}
@@ -203,9 +202,9 @@
                                                         </div>
                                                     @endif
                                                 @else
-                                                    {{-- データなしのプレースホルダー（バーと同じ高さ） --}}
-                                                    <div class="w-full h-full rounded-lg flex items-center justify-center" style="border: 2px dashed #d1d5db;">
-                                                        <span style="font-size: 12px; color: #9ca3af;">—</span>
+                                                    {{-- データなしのプレースホルダー --}}
+                                                    <div class="w-full h-full rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700/30">
+                                                        <span class="text-[10px] text-gray-400 dark:text-gray-500">—</span>
                                                     </div>
                                                 @endif
                                             </div>
