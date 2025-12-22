@@ -139,7 +139,7 @@
                                 @foreach ($timeSlots as $slot)
                                     <div class="flex min-h-[60px] border-t border-gray-100 dark:border-gray-700">
                                         {{-- 時刻ラベル --}}
-                                        <div class="w-16 flex-shrink-0 text-right pr-4 pt-1">
+                                        <div class="w-14 flex-shrink-0 text-right pr-3 pt-1">
                                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ $slot['label'] }}</span>
                                         </div>
                                         
