@@ -7,11 +7,11 @@
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {{-- メイングリッド: 2カラム + 1カラム --}}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- メイングリッド: 3:5:4 の配分 --}}
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                {{-- 左側: 進捗ドーナツチャート（1/3幅） --}}
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                {{-- 左側: 進捗ドーナツチャート（3/12幅） --}}
+                <div class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                         <x-icon name="chart-pie" class="w-5 h-5 text-lask-1" />
                         今日の進捗
@@ -157,8 +157,8 @@
                     </div>
                 </div>
 
-                {{-- 中央: 今日の計画（1/3幅） --}}
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                {{-- 中央: 今日の計画（5/12幅） --}}
+                <div class="lg:col-span-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                             <x-icon name="calendar" class="w-5 h-5 text-lask-1" />
@@ -192,8 +192,8 @@
                     @endif
                 </div>
 
-                {{-- 右側: 期限間近 + 活動ログ（1/3幅） --}}
-                <div class="space-y-6">
+                {{-- 右側: 期限間近 + 活動ログ（4/12幅） --}}
+                <div class="lg:col-span-4 space-y-6">
                     {{-- 期限間近のタスク --}}
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                         <div class="p-4 border-b border-gray-200 dark:border-gray-700">

@@ -112,8 +112,10 @@
 
                                 {{-- ホバーツールチップ --}}
                                 @if ($day['plans']->count() > 0 && $day['isCurrentMonth'])
-                                    <div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 hidden group-hover:block z-[9999]">
-                                        <div class="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-2 shadow-xl border border-gray-600" style="min-width: 180px; max-width: 220px;">
+                                    {{-- 左端(日曜)は左寄せ、右端(土曜)は右寄せ、それ以外は中央 --}}
+                                    <div class="absolute top-full mt-1 hidden group-hover:block z-[9999]
+                                        {{ $i == 0 ? 'left-0' : ($i == 6 ? 'right-0' : 'left-1/2 -translate-x-1/2') }}">
+                                        <div class="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-2 shadow-xl border border-gray-600" style="min-width: 160px; max-width: 200px;">
                                             <div class="font-semibold mb-1.5 text-center border-b border-gray-600 pb-1">
                                                 {{ $day['date']->isoFormat('M月D日 (ddd)') }}
                                             </div>
@@ -136,8 +138,9 @@
                                             <div class="mt-1.5 pt-1 border-t border-gray-600 text-center text-gray-300">
                                                 {{ $day['plans']->count() }}件 / {{ round($day['plans']->sum('duration_minutes') / 60, 1) }}時間
                                             </div>
-                                            {{-- 三角形（上向き） --}}
-                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-gray-700"></div>
+                                            {{-- 三角形（位置も曜日に応じて調整） --}}
+                                            <div class="absolute bottom-full border-4 border-transparent border-b-gray-900 dark:border-b-gray-700
+                                                {{ $i == 0 ? 'left-4' : ($i == 6 ? 'right-4' : 'left-1/2 -translate-x-1/2') }}"></div>
                                         </div>
                                     </div>
                                 @endif
