@@ -127,7 +127,7 @@ class MockDataSeeder extends Seeder
                 'end_time' => '11:00',
                 'duration_minutes' => 120,
                 'priority' => 9,
-                'status' => 'planned',
+                'status' => 'completed',
                 'ai_reason' => '午前中は集中力が高いため、難しいタスクを配置。',
             ],
             [

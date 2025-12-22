@@ -61,7 +61,7 @@
             </div>
             
             {{-- タイトル --}}
-            <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ $plan->title }}</h4>
+            <h4 class="font-semibold {{ $plan->status === 'completed' ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100' }}">{{ $plan->title }}</h4>
             
             {{-- AI理由 --}}
             @if ($plan->ai_reason)
@@ -74,6 +74,11 @@
 
         {{-- ステータス --}}
         <div class="flex items-center gap-2 ml-3">
+            @if ($plan->status === 'completed')
+                <div class="w-5 h-5 rounded-full bg-lask-success/20 flex items-center justify-center">
+                    <x-icon name="check" class="w-3.5 h-3.5 text-lask-success" />
+                </div>
+            @endif
             <span class="text-xs font-medium {{ $statusColors[$plan->status] ?? 'text-gray-500' }}">
                 {{ $plan->status_info['label'] }}
             </span>
