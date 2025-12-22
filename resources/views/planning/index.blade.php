@@ -120,21 +120,23 @@
                                     <div class="text-center relative group">
                                         <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $day->isoFormat('ddd') }}</div>
                                         <div class="text-sm font-medium mb-2 {{ $day->isToday() ? 'w-6 h-6 mx-auto bg-lask-accent text-white rounded-full flex items-center justify-center' : 'text-gray-900 dark:text-gray-100' }}">{{ $day->day }}</div>
-                                        <div class="h-28 bg-gray-100 dark:bg-gray-700 rounded-lg relative overflow-hidden cursor-pointer">
-                                            @foreach ($dayPlans->take(3) as $plan)
-                                                @php
-                                                    $colors = [
-                                                        'study' => 'bg-lask-accent-subtle',
-                                                        'work' => 'bg-[#6b8cae]',
-                                                        'break' => 'bg-[#8fbc8f]',
-                                                        'review' => 'bg-[#2c3e50]',
-                                                    ];
-                                                @endphp
-                                                <div class="h-5 {{ $colors[$plan->plan_type] ?? 'bg-gray-500' }} mb-0.5"></div>
-                                            @endforeach
-                                            @if ($dayPlans->count() > 3)
-                                                <div class="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
-                                                    +{{ $dayPlans->count() - 3 }}
+                                        <div class="h-28 bg-gray-100 dark:bg-gray-700 rounded-lg relative overflow-hidden cursor-pointer flex flex-col">
+                                            <div class="flex-1 flex flex-col justify-start">
+                                                @foreach ($dayPlans->take(5) as $plan)
+                                                    @php
+                                                        $colors = [
+                                                            'study' => 'bg-lask-accent-subtle',
+                                                            'work' => 'bg-[#6b8cae]',
+                                                            'break' => 'bg-[#8fbc8f]',
+                                                            'review' => 'bg-[#2c3e50]',
+                                                        ];
+                                                    @endphp
+                                                    <div class="h-4 {{ $colors[$plan->plan_type] ?? 'bg-gray-500' }} mb-px flex-shrink-0"></div>
+                                                @endforeach
+                                            </div>
+                                            @if ($dayPlans->count() > 5)
+                                                <div class="absolute bottom-0 left-0 right-0 text-xs text-gray-500 dark:text-gray-400 text-center py-1 bg-gray-100/90 dark:bg-gray-700/90">
+                                                    +{{ $dayPlans->count() - 5 }}
                                                 </div>
                                             @endif
                                         </div>
