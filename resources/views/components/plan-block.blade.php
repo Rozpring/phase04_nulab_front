@@ -26,11 +26,21 @@
         'completed' => 'text-lask-success',
         'skipped' => 'text-lask-warning',
     ];
+    
+    // ステータスに基づくカードスタイル
+    $statusCardStyles = [
+        'planned' => '',
+        'in_progress' => 'border-l-4 border-l-lask-accent ring-1 ring-lask-accent/30 shadow-sm',
+        'completed' => 'opacity-60',
+        'skipped' => 'opacity-50 bg-gray-100 dark:bg-gray-700/50',
+    ];
+    
     $iconName = $typeIcons[$plan->plan_type] ?? 'clipboard-document-list';
     $iconColor = $typeIconColors[$plan->plan_type] ?? 'text-lask-text-secondary';
+    $cardStatusStyle = $statusCardStyles[$plan->status] ?? '';
 @endphp
 
-<div class="px-5 py-4 rounded-2xl {{ $typeColors[$plan->plan_type] ?? 'bg-gray-100 dark:bg-gray-700' }} hover:shadow-md transition-all duration-200">
+<div class="px-5 py-4 rounded-2xl {{ $typeColors[$plan->plan_type] ?? 'bg-gray-100 dark:bg-gray-700' }} {{ $cardStatusStyle }} hover:shadow-md transition-all duration-200">
     <div class="flex items-start justify-between">
         <div class="flex-1">
             {{-- 時間とタイプ --}}
