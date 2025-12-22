@@ -127,6 +127,25 @@
                             </button>
                         </div>
 
+                        {{-- 完了率プログレスバー --}}
+                        <div class="w-full mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-400">完了率</span>
+                                <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ $progress['completion_rate'] }}%</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div 
+                                    class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500 ease-out"
+                                    style="width: {{ $progress['completion_rate'] }}%"
+                                ></div>
+                            </div>
+                            @if ($progress['total'] > 0)
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 text-center">
+                                    {{ $progress['completed'] }} / {{ $progress['total'] }} タスク完了
+                                </p>
+                            @endif
+                        </div>
+
                         {{-- ポップアップ --}}
                         <div 
                             x-show="activePopup !== null"
