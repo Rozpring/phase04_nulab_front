@@ -196,8 +196,21 @@
                             </a>
                         </div>
                     @else
+                        @php
+                            // 完了・スキップタスクを下に表示するためにソート
+                            $sortedPlans = $todayPlans->sortBy(function($plan) {
+                                // 未完了タスクを上に（0-1）、完了系を下に（2-3）
+                                return match($plan->status) {
+                                    'in_progress' => 0,  // 進行中が最上位
+                                    'planned' => 1,      // 予定が次
+                                    'completed' => 2,    // 完了は下
+                                    'skipped' => 3,      // スキップは最下位
+                                    default => 1,
+                                };
+                            });
+                        @endphp
                         <div class="space-y-3 p-3">
-                            @foreach ($todayPlans->take(6) as $plan)
+                            @foreach ($sortedPlans->take(6) as $plan)
                                 <x-plan-block :plan="$plan" />
                             @endforeach
                         </div>
