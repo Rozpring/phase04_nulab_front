@@ -130,8 +130,12 @@
                                                             'break' => 'bg-[#8fbc8f]',
                                                             'review' => 'bg-[#2c3e50]',
                                                         ];
+                                                        // タスク時間に比例したバー高さを計算
+                                                        // 15分 = 8px, 30分 = 12px, 60分 = 20px, 120分 = 32px
+                                                        $durationMinutes = $plan->duration_minutes ?? 30;
+                                                        $barHeight = max(8, min(32, round($durationMinutes / 4)));
                                                     @endphp
-                                                    <div class="h-4 {{ $colors[$plan->plan_type] ?? 'bg-gray-500' }} mb-px flex-shrink-0"></div>
+                                                    <div class="{{ $colors[$plan->plan_type] ?? 'bg-gray-500' }} mb-px flex-shrink-0 rounded-sm" style="height: {{ $barHeight }}px;"></div>
                                                 @endforeach
                                             </div>
                                             @if ($dayPlans->count() > 5)
