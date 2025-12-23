@@ -29,6 +29,10 @@ return new class extends Migration
 
             $table->index(['user_id', 'scheduled_date']);
             $table->index(['user_id', 'status']);
+            $table->index(['user_id', 'scheduled_date', 'status']);
+            //追加部分（岡部条）
+            $table->date('start_date')->nullable()->after('scheduled_date');
+            $table->date('end_date')->nullable()->after('start_date');
         });
     }
 
@@ -38,5 +42,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('study_plans');
+        //追加部分（岡部条）
+                Schema::table('study_plans', function (Blueprint $table) {
+            $table->dropColumn('end_date');
+        });
     }
 };
