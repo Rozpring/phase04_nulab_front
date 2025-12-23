@@ -142,7 +142,8 @@
                                             $total = $day['completed'] + $day['failed'];
                                             $completedHeight = ($day['completed'] / $maxBarValue) * 100;
                                             $failedHeight = ($day['failed'] / $maxBarValue) * 100;
-                                            $isToday = ($day['dayOfWeek'] == 4); // Thu = 今日（12/18）
+                                            // Carbonで今日判定（フォーマット差異も吸収）
+                                            $isToday = (\Carbon\Carbon::parse($day['date'])->isSameDay(now()));
                                             $hasData = $total > 0;
                                         @endphp
                                         
@@ -216,7 +217,9 @@
                                                         <span class="ml-1 text-[10px] bg-lask-accent-subtle text-lask-1 px-1 rounded">今日</span>
                                                     @endif
                                                 </div>
-                                                <div class="text-xs text-gray-400 dark:text-gray-500">{{ $day['date'] }}</div>
+                                                <div class="text-xs text-gray-400 dark:text-gray-500">
+                                                    {{ \Carbon\Carbon::parse($day['date'])->format('n/j') }}
+                                                </div>
                                             </div>
                                         </div>
                                     @endforeach
@@ -433,6 +436,10 @@
                             <a href="{{ route('planning.calendar') }}" class="flex items-center gap-3 p-3 bg-lask-accent-subtle rounded-xl hover:bg-lask-accent/20 transition text-gray-700 dark:text-gray-300">
                                 <x-icon name="calendar" class="w-5 h-5 text-lask-1" />
                                 <span>カレンダーを見る</span>
+                            </a>
+                            <a href="{{ route('planning.gantt') }}" class="flex items-center gap-3 p-3 bg-lask-accent-subtle rounded-xl hover:bg-lask-accent/20 transition text-gray-700 dark:text-gray-300">
+                                <x-icon name="bars-3-bottom-left" class="w-5 h-5 text-lask-1" />
+                                <span>ガントチャートを見る</span>
                             </a>
                         </div>
                     </div>

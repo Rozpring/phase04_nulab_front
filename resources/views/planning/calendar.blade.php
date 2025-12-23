@@ -25,27 +25,28 @@
             </div>
             {{-- ビュー切替タブ --}}
             <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                <a href="{{ route('planning.index') }}" 
+                <a href="{{ route('planning.index') }}"
                    class="px-4 py-2 text-sm font-medium rounded-md transition flex items-center gap-1 {{ request()->routeIs('planning.index') ? 'bg-white dark:bg-gray-800 text-lask-1 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200' }}">
                     <x-icon name="clipboard-document-list" class="w-4 h-4" />
                     カンバン
                 </a>
-                <a href="{{ route('planning.timeline') }}" 
+                <a href="{{ route('planning.timeline') }}"
                    class="px-4 py-2 text-sm font-medium rounded-md transition flex items-center gap-1 {{ request()->routeIs('planning.timeline') ? 'bg-white dark:bg-gray-800 text-lask-1 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200' }}">
                     <x-icon name="clock" class="w-4 h-4" />
                     タイムライン
                 </a>
-                <a href="{{ route('planning.calendar') }}" 
+                <a href="{{ route('planning.calendar') }}"
                    class="px-4 py-2 text-sm font-medium rounded-md transition flex items-center gap-1 {{ request()->routeIs('planning.calendar') ? 'bg-white dark:bg-gray-800 text-lask-1 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200' }}">
                     <x-icon name="calendar" class="w-4 h-4" />
                     カレンダー
                 </a>
+                
             </div>
         </div>
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="w-full sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
                 {{-- 曜日ヘッダー --}}
                 <div class="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
@@ -149,27 +150,27 @@
                     </div>
                 @endforeach
             </div>
+        </div>
 
-            {{-- フッター --}}
-            <div class="mt-6 flex items-center justify-between">
-                <div class="flex gap-4 text-sm">
-                    <div class="flex items-center gap-1">
-                        <div class="w-3 h-3 bg-lask-accent rounded"></div>
-                        <span class="text-gray-600 dark:text-gray-400">学習</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-3 h-3 bg-lask-1 rounded"></div>
-                        <span class="text-gray-600 dark:text-gray-400">作業</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-3 h-3 bg-lask-4 rounded"></div>
-                        <span class="text-gray-600 dark:text-gray-400">休憩</span>
-                    </div>
+        {{-- フッター --}}
+        <div class="mt-6 flex items-center justify-between">
+            <div class="flex gap-4 text-sm">
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 bg-lask-accent rounded"></div>
+                    <span class="text-gray-600 dark:text-gray-400">学習</span>
                 </div>
-                <a href="{{ route('planning.index') }}" class="text-sm text-lask-1 hover:underline">
-                    ← ダッシュボードに戻る
-                </a>
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 bg-lask-1 rounded"></div>
+                    <span class="text-gray-600 dark:text-gray-400">作業</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 bg-lask-4 rounded"></div>
+                    <span class="text-gray-600 dark:text-gray-400">休憩</span>
+                </div>
             </div>
+            <a href="{{ route('planning.index') }}" class="text-sm text-lask-1 hover:underline">
+                ← ダッシュボードに戻る
+            </a>
         </div>
     </div>
 </x-app-layout>

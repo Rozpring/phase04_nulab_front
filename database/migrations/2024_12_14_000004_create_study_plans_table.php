@@ -29,6 +29,8 @@ return new class extends Migration
 
             $table->index(['user_id', 'scheduled_date']);
             $table->index(['user_id', 'status']);
+            $table->index(['user_id', 'scheduled_date', 'status']);
+            
         });
     }
 

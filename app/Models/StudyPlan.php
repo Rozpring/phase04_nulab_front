@@ -26,6 +26,7 @@ class StudyPlan extends Model
     {
         return [
             'scheduled_date' => 'date',
+            'end_date' => 'date',
             'scheduled_time' => 'datetime:H:i',
             'end_time' => 'datetime:H:i',
         ];

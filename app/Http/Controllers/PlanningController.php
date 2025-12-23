@@ -4,18 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\ImportedIssue;
 use App\Models\StudyPlan;
+use App\Models\Task;//追加（岡部条）
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
+
 class PlanningController extends Controller
 {
     /**
      * 計画ダッシュボード
      */
-    public function index(): View
+    // ▼ 変更: Request $request を引数に追加
+    public function index(Request $request): View
     {
         $userId = Auth::id();
         
@@ -51,7 +54,28 @@ class PlanningController extends Controller
                 ->count(),
         ];
 
-        return view('planning.index', compact('importedIssues', 'todayPlans', 'weekPlans', 'stats'));
+        // 追加: ガントチャート用データの取得ロジック           岡部条（追加）
+        $year = $request->input('year', now()->year);
+        $month = $request->input('month', now()->month);
+        
+        $startOfMonth = Carbon::create($year, $month, 1);
+        $endOfMonth = $startOfMonth->copy()->endOfMonth();
+
+        // その月に表示すべきタスクをDBから取得
+        $ganttTasks = Task::where(function($q) use ($startOfMonth, $endOfMonth) {
+                $q->whereBetween('start_date', [$startOfMonth, $endOfMonth])
+                ->orWhereBetween('end_date', [$startOfMonth, $endOfMonth])
+                ->orWhere(function($q2) use ($startOfMonth, $endOfMonth) {
+                    $q2->where('start_date', '<', $startOfMonth)
+                    ->where('end_date', '>', $endOfMonth);
+                });
+            })
+            ->orderBy('start_date')
+            ->get();
+        // 追加ここまで 
+
+        // viewに year, month, ganttTasks を追加して渡す
+        return view('planning.index', compact('importedIssues', 'todayPlans', 'weekPlans', 'stats', 'year', 'month', 'ganttTasks'));
     }
 
     /**
@@ -254,6 +278,18 @@ class PlanningController extends Controller
                 return $plan->scheduled_date->format('Y-m-d');
             });
 
+        //追加（岡部条）
+        $ganttTasks = Task::orderBy('start_date')->get()->map(function($task) {
+            return [
+                'id' => $task->id,
+                'title' => $task->title,
+                'start_date' => $task->start_date,
+                'end_date' => $task->end_date,
+                'status' => $task->status ?? 'gray',
+            ];
+        })->toArray();
+        //追加ここまで
+
         // カレンダー用のデータを生成
         $calendar = [];
         $currentDate = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
@@ -275,6 +311,60 @@ class PlanningController extends Controller
             $calendar[] = $week;
         }
 
-        return view('planning.calendar', compact('calendar', 'year', 'month', 'startOfMonth'));
+        return view('planning.calendar', compact('calendar', 'year', 'month', 'startOfMonth', 'ganttTasks'));
+    }
+
+    /**
+     * ガントチャート表示
+     */
+    /**
+     * ガントチャート表示
+     */
+    public function gantt(Request $request): View
+    {
+        $userId = Auth::id();
+        $year = $request->input('year', now()->year);
+        $month = $request->input('month', now()->month);
+
+        $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $daysInMonth = $startOfMonth->daysInMonth;
+
+        //追加（岡部条）
+        $ganttTasks = Task::orderBy('start_date')->get()->map(function($task) {
+            return [
+                'id' => $task->id,
+                'title' => $task->title,
+                'start_date' => $task->start_date,
+                'end_date' => $task->end_date,
+                'status' => $task->status ?? 'gray',
+            ];
+        })->toArray();
+
+        return view('planning.gantt', compact('ganttTasks', 'year', 'month', 'daysInMonth'));
+    }
+
+    //追加（岡部条）
+    public function updateDates(Request $request, Task $task)
+    {
+        // 1. バリデーション
+        $validated = $request->validate([
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date'   => 'required|date_format:Y-m-d|after_or_equal:start_date',
+        ]);
+
+        // 2. 更新
+        $task->update([
+            'start_date' => $validated['start_date'],
+            'end_date'   => $validated['end_date'],
+        ]);
+
+        // 3. レスポンス
+        return response()->json([
+            'success' => true,
+            'message' => 'スケジュールを更新しました',
+            'task' => $task
+        ]);
     }
 }
+
+//追加ここまで

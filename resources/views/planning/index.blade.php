@@ -63,7 +63,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {{-- 左側: 今日の計画 --}}
+                {{-- 左側: メインコンテンツエリア --}}
                 <div class="lg:col-span-2 space-y-6">
                     {{-- AI計画生成 --}}
                     <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-lask-accent/30">
@@ -99,10 +99,9 @@
                         </div>
                     </div>
 
-
                     {{-- 週間プレビュー --}}
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-                        <div class="px-6 py-4 border-b border-lask-border">
+                        <div class="px-6 py-4 border-b border-lask-border flex items-center justify-between">
                             <h3 class="text-lg font-semibold text-lask-text-primary flex items-center gap-2">
                                 <x-icon name="chart-bar" class="w-6 h-6 text-lask-1" />
                                 今週の予定
@@ -130,8 +129,6 @@
                                                             'break' => 'bg-[#8fbc8f]',
                                                             'review' => 'bg-[#2c3e50]',
                                                         ];
-                                                        // タスク時間に比例したバー高さを計算
-                                                        // 15分 = 8px, 30分 = 12px, 60分 = 20px, 120分 = 32px
                                                         $durationMinutes = $plan->duration_minutes ?? 30;
                                                         $barHeight = max(8, min(32, round($durationMinutes / 4)));
                                                     @endphp
@@ -148,7 +145,6 @@
                                             {{ $totalMinutes > 0 ? round($totalMinutes / 60, 1) . 'h' : '-' }}
                                         </div>
                                         
-                                        {{-- ホバーツールチップ --}}
                                         @if ($dayPlans->count() > 0)
                                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-[9999]">
                                                 <div class="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-2 shadow-xl whitespace-nowrap border border-gray-600" style="min-width: 160px;">
@@ -169,7 +165,6 @@
                                                     <div class="mt-1.5 pt-1 border-t border-gray-600 text-center text-gray-300">
                                                         合計: {{ round($totalMinutes / 60, 1) }}時間
                                                     </div>
-                                                    {{-- 三角形 --}}
                                                     <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
                                                 </div>
                                             </div>
@@ -193,6 +188,129 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- 追加（岡部条） --}}
+                    @php
+                        // リクエストから年月を取得
+                        $year = request('year', $year ?? now()->year);
+                        $month = request('month', $month ?? now()->month);
+                        $currentMonth = \Carbon\Carbon::create($year, $month, 1);
+                        
+                        $daysInMonth = $currentMonth->daysInMonth;
+                        
+                        // 前月・翌月のリンク用データ
+                        $prevMonth = $currentMonth->copy()->subMonth();
+                        $nextMonth = $currentMonth->copy()->addMonth();
+
+                        // 色設定
+                        $ganttColors = [
+                            'study' => 'bg-lask-accent text-white',
+                            'work' => 'bg-[#6b8cae] text-white',
+                            'break' => 'bg-[#8fbc8f] text-white',
+                            'review' => 'bg-[#2c3e50] text-gray-200',
+                            'default' => 'bg-gray-400 text-white', // デフォルト色
+                        ];
+                    @endphp
+
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-lask-border flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <h3 class="text-lg font-semibold text-lask-text-primary flex items-center gap-2">
+                                    <x-icon name="calendar-days" class="w-6 h-6 text-lask-1" />
+                                    {{ $currentMonth->year }}年{{ $currentMonth->month }}月の流れ
+                                </h3>
+                                
+                                <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+                                    <a href="{{ route('planning.index', ['year' => $prevMonth->year, 'month' => $prevMonth->month]) }}" 
+                                    class="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md transition text-gray-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                    </a>
+                                    <a href="{{ route('planning.index', ['year' => $nextMonth->year, 'month' => $nextMonth->month]) }}" 
+                                    class="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md transition text-gray-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <a href="{{ route('planning.gantt', ['year' => $currentMonth->year, 'month' => $currentMonth->month]) }}" class="text-xs text-lask-1 hover:underline">
+                                詳細を見る
+                            </a>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <div class="min-w-[700px]">
+                                    {{-- ヘッダー：日付 --}}
+                                    <div class="grid border-b border-gray-100 dark:border-gray-700 mb-2" 
+                                        style="grid-template-columns: 150px repeat({{ $daysInMonth }}, 1fr);">
+                                        <div class="text-xs font-bold text-gray-500 py-2">タスク名</div>
+                                        @for ($d = 1; $d <= $daysInMonth; $d++)
+                                            @php $date = $currentMonth->copy()->addDays($d - 1); @endphp
+                                            <div class="text-center pb-2">
+                                                <div class="text-[9px] {{ $date->isWeekend() ? 'text-red-400' : 'text-gray-400' }}">{{ $date->isoFormat('dd') }}</div>
+                                                <div class="text-[10px] font-medium {{ $date->isToday() ? 'text-lask-accent font-bold' : 'text-gray-600 dark:text-gray-300' }}">{{ $d }}</div>
+                                            </div>
+                                        @endfor
+                                    </div>
+
+                                    {{-- ボディ：タスクバーエリア --}}
+                                    <div class="space-y-3 relative">
+                                        {{-- 背景グリッド線 --}}
+                                        <div class="absolute inset-0 grid h-full pointer-events-none" 
+                                            style="grid-template-columns: 150px repeat({{ $daysInMonth }}, 1fr);">
+                                            <div></div>
+                                            @for ($d = 1; $d <= $daysInMonth; $d++)
+                                                <div class="border-r border-gray-50 dark:border-gray-800 h-full"></div>
+                                            @endfor
+                                        </div>
+
+                                        {{-- ★修正: コントローラーから渡された $ganttTasks をループ --}}
+                                        @forelse ($ganttTasks as $task)
+                                            @php
+                                                // 日付計算ロジック (DBの start_date/end_date を使用)
+                                                $start = \Carbon\Carbon::parse($task->start_date);
+                                                $end = \Carbon\Carbon::parse($task->end_date);
+                                                
+                                                // 表示範囲外ならスキップ
+                                                if ($end->lt($currentMonth->copy()->startOfMonth()) || $start->gt($currentMonth->copy()->endOfMonth())) continue;
+
+                                                // 今月の範囲内にクランプ（1日より前なら1日、月末より後なら月末）
+                                                $startDay = $start->lt($currentMonth) ? 1 : $start->day;
+                                                $endDay = $end->gt($currentMonth->copy()->endOfMonth()) ? $daysInMonth : $end->day;
+                                                
+                                                // バーの長さと位置を計算
+                                                $duration = $endDay - $startDay + 1;
+                                                $leftPos = (($startDay - 1) / $daysInMonth) * 100;
+                                                $widthSize = ($duration / $daysInMonth) * 100;
+                                                
+                                                // DBにtypeカラムがない場合のデフォルト処理
+                                                // (もしTaskテーブルにtypeがあれば $task->type を使用。
+                                                $type = $task->type ?? 'work'; 
+                                            @endphp
+
+                                            <div class="grid items-center relative z-10 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition rounded"
+                                                style="grid-template-columns: 150px 1fr;">
+                                                
+                                                <div class="pr-2 py-1 text-xs text-gray-700 dark:text-gray-200 truncate font-medium" title="{{ $task->title }}">
+                                                    {{ $task->title }}
+                                                </div>
+                                                
+                                                <div class="relative h-6 w-full">
+                                                    <div class="absolute top-1/2 -translate-y-1/2 h-4 rounded text-[9px] flex items-center px-2 shadow-sm {{ $ganttColors[$type] ?? $ganttColors['default'] }}"
+                                                        style="left: {{ $leftPos }}%; width: {{ $widthSize }}%; min-width: 10px;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="p-4 text-center text-xs text-gray-400 col-span-full">
+                                                この月の予定はありません
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- //ここまで  岡部条（追加） --}}
                 </div>
 
                 {{-- 右側: サイドバー --}}
@@ -241,8 +359,6 @@
                             </div>
                         @endif
                     </div>
-
-
                 </div>
             </div>
         </div>
