@@ -9,11 +9,18 @@ class Task extends Model
 {
     use HasFactory;
 
-    // 変更しても良い項目をリストアップ
     protected $fillable = [
         'title',
         'start_date',
         'end_date',
         'status',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'start_date' => 'date',
+            'end_date' => 'date',
+        ];
+    }
 }
