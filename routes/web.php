@@ -6,7 +6,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TaskController; // ガントチャート用
 
 Route::get('/', function () {
     return view('welcome');
@@ -37,11 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::get('planning/timeline', [PlanningController::class, 'timeline'])->name('planning.timeline');
     Route::get('planning/calendar', [PlanningController::class, 'calendar'])->name('planning.calendar');
 
-    // 今週の流れ　　ガントチャート表示と更新（岡部条）
-    Route::get('/planning/gantt', [PlanningController::class, 'gantt'])->name('planning.gantt');    // 計画コントローラーの中にganttメソッド　追加（岡部条）
-    Route::post('/api/tasks/{task}/update-dates', [TaskController::class, 'updateDates']) // タスクの日付更新用ルート (JSのfetch先とURLを合わせています)
-    ->name('tasks.updateDates');
-    Route::post('/api/tasks/{task}/update-dates', [PlanningController::class, 'updateDates'])->name('tasks.updateDates');//ガントチャートの日付更新ルート　//追加ここまで
+    // ガントチャート
+    Route::get('planning/gantt', [PlanningController::class, 'gantt'])->name('planning.gantt');
+    Route::post('/api/tasks/{task}/update-dates', [PlanningController::class, 'updateDates'])->name('tasks.updateDates');
 });
 
 require __DIR__.'/auth.php';
+

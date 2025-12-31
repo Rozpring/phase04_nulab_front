@@ -5,9 +5,6 @@
     
     $currentDate = \Carbon\Carbon::create($year, $month, 1);
     $daysInMonth = $currentDate->daysInMonth;
-    $currentDate = \Carbon\Carbon::create($year, $month, 1);
-    $daysInMonth = $currentDate->daysInMonth;
-@endphp
 @endphp
 
 <x-app-layout>
