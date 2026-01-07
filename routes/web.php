@@ -35,11 +35,17 @@ Route::middleware('auth')->group(function () {
     Route::post('planning/generate', [PlanningController::class, 'generate'])->name('planning.generate');
     Route::get('planning/timeline', [PlanningController::class, 'timeline'])->name('planning.timeline');
     Route::get('planning/calendar', [PlanningController::class, 'calendar'])->name('planning.calendar');
-
+    Route::patch('/planning/tasks/{id}/status', [PlanningController::class, 'updateStatus'])->name('planning.updateStatus');
     // ガントチャート
     Route::get('planning/gantt', [PlanningController::class, 'gantt'])->name('planning.gantt');
     Route::post('/api/tasks/{task}/update-dates', [PlanningController::class, 'updateDates'])->name('tasks.updateDates');
+
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/planning', [PlanningController::class, 'index'])->name('planning.index');
+    // （ドラッグ＆ドロップ保存用API）
+    Route::patch('/planning/tasks/{id}/status', [PlanningController::class, 'updateStatus'])->name('planning.updateStatus');
 });
 
 require __DIR__.'/auth.php';
 
+});

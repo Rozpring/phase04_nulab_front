@@ -94,7 +94,8 @@
                                 <span class="ml-2 text-xs text-lask-text-secondary font-normal">（ドラッグ＆ドロップで移動）</span>
                             </h3>
                         </div>
-                        <div class="p-4">
+                        {{-- ★修正: Alpine.jsのストア 'plans' を参照するようにコンポーネントが作られている前提 --}}
+                        <div class="p-4" x-data>
                             <x-kanban-board />
                         </div>
                     </div>
@@ -144,71 +145,28 @@
                                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             {{ $totalMinutes > 0 ? round($totalMinutes / 60, 1) . 'h' : '-' }}
                                         </div>
-                                        
-                                        @if ($dayPlans->count() > 0)
-                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-[9999]">
-                                                <div class="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-2 shadow-xl whitespace-nowrap border border-gray-600" style="min-width: 160px;">
-                                                    <div class="font-semibold mb-1.5 text-center border-b border-gray-600 pb-1">
-                                                        {{ $day->isoFormat('M/D (ddd)') }}
-                                                    </div>
-                                                    <div class="space-y-1 max-h-32 overflow-y-auto">
-                                                        @foreach ($dayPlans->take(5) as $plan)
-                                                            <div class="flex items-center gap-1.5">
-                                                                <div class="w-2 h-2 rounded-full {{ $colors[$plan->plan_type] ?? 'bg-gray-500' }}"></div>
-                                                                <span class="truncate">{{ Str::limit($plan->title, 15) }}</span>
-                                                            </div>
-                                                        @endforeach
-                                                        @if ($dayPlans->count() > 5)
-                                                            <div class="text-gray-400 text-center">他{{ $dayPlans->count() - 5 }}件</div>
-                                                        @endif
-                                                    </div>
-                                                    <div class="mt-1.5 pt-1 border-t border-gray-600 text-center text-gray-300">
-                                                        合計: {{ round($totalMinutes / 60, 1) }}時間
-                                                    </div>
-                                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
-                                                </div>
-                                            </div>
-                                        @endif
                                     </div>
                                 @endfor
-                            </div>
-                            <div class="flex justify-center gap-4 sm:gap-6 mt-5 text-xs">
-                                <div class="flex items-center gap-1">
-                                    <div class="w-3 h-3 bg-lask-accent-subtle rounded"></div>
-                                    <span class="text-lask-text-secondary">学習</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <div class="w-3 h-3 bg-[#6b8cae] rounded"></div>
-                                    <span class="text-lask-text-secondary">作業</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <div class="w-3 h-3 bg-[#8fbc8f] rounded"></div>
-                                    <span class="text-lask-text-secondary">休憩</span>
-                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- 追加（岡部条） --}}
+                    {{-- ガントチャート (Okabe Jo 追加分) --}}
                     @php
-                        // リクエストから年月を取得
                         $year = request('year', $year ?? now()->year);
                         $month = request('month', $month ?? now()->month);
                         $currentMonth = \Carbon\Carbon::create($year, $month, 1);
-                        
                         $daysInMonth = $currentMonth->daysInMonth;
                         
-                        // 前月・翌月のリンク用データ
                         $prevMonth = $currentMonth->copy()->subMonth();
                         $nextMonth = $currentMonth->copy()->addMonth();
 
-                        // 色設定
                         $ganttColors = [
                             'study' => 'bg-lask-accent text-white',
                             'work' => 'bg-[#6b8cae] text-white',
                             'break' => 'bg-[#8fbc8f] text-white',
                             'review' => 'bg-[#2c3e50] text-gray-200',
-                            'default' => 'bg-gray-400 text-white', // デフォルト色
+                            'default' => 'bg-gray-400 text-white',
                         ];
                     @endphp
 
@@ -219,7 +177,6 @@
                                     <x-icon name="calendar-days" class="w-6 h-6 text-lask-1" />
                                     {{ $currentMonth->year }}年{{ $currentMonth->month }}月の流れ
                                 </h3>
-                                
                                 <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
                                     <a href="{{ route('planning.index', ['year' => $prevMonth->year, 'month' => $prevMonth->month]) }}" 
                                     class="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md transition text-gray-500">
@@ -231,7 +188,6 @@
                                     </a>
                                 </div>
                             </div>
-
                             <a href="{{ route('planning.gantt', ['year' => $currentMonth->year, 'month' => $currentMonth->month]) }}" class="text-xs text-lask-1 hover:underline">
                                 詳細を見る
                             </a>
@@ -239,7 +195,7 @@
                         <div class="p-6">
                             <div class="overflow-x-auto">
                                 <div class="min-w-[700px]">
-                                    {{-- ヘッダー：日付 --}}
+                                    {{-- ガントチャートヘッダー --}}
                                     <div class="grid border-b border-gray-100 dark:border-gray-700 mb-2" 
                                         style="grid-template-columns: 150px repeat({{ $daysInMonth }}, 1fr);">
                                         <div class="text-xs font-bold text-gray-500 py-2">タスク名</div>
@@ -251,10 +207,8 @@
                                             </div>
                                         @endfor
                                     </div>
-
-                                    {{-- ボディ：タスクバーエリア --}}
+                                    {{-- ガントチャートボディ --}}
                                     <div class="space-y-3 relative">
-                                        {{-- 背景グリッド線 --}}
                                         <div class="absolute inset-0 grid h-full pointer-events-none" 
                                             style="grid-template-columns: 150px repeat({{ $daysInMonth }}, 1fr);">
                                             <div></div>
@@ -262,38 +216,26 @@
                                                 <div class="border-r border-gray-50 dark:border-gray-800 h-full"></div>
                                             @endfor
                                         </div>
-
-                                        {{-- ★修正: コントローラーから渡された $ganttTasks をループ --}}
                                         @forelse ($ganttTasks as $task)
                                             @php
-                                                // 日付計算ロジック (DBの start_date/end_date を使用)
-                                                $start = \Carbon\Carbon::parse($task->start_date);
-                                                $end = \Carbon\Carbon::parse($task->end_date);
+                                                $start = \Carbon\Carbon::parse($task['start_date']);
+                                                $end = \Carbon\Carbon::parse($task['end_date']);
                                                 
-                                                // 表示範囲外ならスキップ
                                                 if ($end->lt($currentMonth->copy()->startOfMonth()) || $start->gt($currentMonth->copy()->endOfMonth())) continue;
 
-                                                // 今月の範囲内にクランプ（1日より前なら1日、月末より後なら月末）
                                                 $startDay = $start->lt($currentMonth) ? 1 : $start->day;
                                                 $endDay = $end->gt($currentMonth->copy()->endOfMonth()) ? $daysInMonth : $end->day;
                                                 
-                                                // バーの長さと位置を計算
                                                 $duration = $endDay - $startDay + 1;
                                                 $leftPos = (($startDay - 1) / $daysInMonth) * 100;
                                                 $widthSize = ($duration / $daysInMonth) * 100;
-                                                
-                                                // DBにtypeカラムがない場合のデフォルト処理
-                                                // (もしTaskテーブルにtypeがあれば $task->type を使用。
-                                                $type = $task->type ?? 'work'; 
+                                                $type = $task['type'] ?? 'work'; 
                                             @endphp
-
                                             <div class="grid items-center relative z-10 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition rounded"
                                                 style="grid-template-columns: 150px 1fr;">
-                                                
-                                                <div class="pr-2 py-1 text-xs text-gray-700 dark:text-gray-200 truncate font-medium" title="{{ $task->title }}">
-                                                    {{ $task->title }}
+                                                <div class="pr-2 py-1 text-xs text-gray-700 dark:text-gray-200 truncate font-medium" title="{{ $task['title'] }}">
+                                                    {{ $task['title'] }}
                                                 </div>
-                                                
                                                 <div class="relative h-6 w-full">
                                                     <div class="absolute top-1/2 -translate-y-1/2 h-4 rounded text-[9px] flex items-center px-2 shadow-sm {{ $ganttColors[$type] ?? $ganttColors['default'] }}"
                                                         style="left: {{ $leftPos }}%; width: {{ $widthSize }}%; min-width: 10px;">
@@ -310,7 +252,6 @@
                             </div>
                         </div>
                     </div>
-                    {{-- //ここまで  岡部条（追加） --}}
                 </div>
 
                 {{-- 右側: サイドバー --}}
@@ -327,17 +268,18 @@
                             @forelse ($importedIssues->take(5) as $issue)
                                 <div class="p-4">
                                     <div class="flex items-center gap-2 mb-1">
-                                        <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ $issue->issue_key }}</span>
-                                        @if ($issue->is_overdue)
+                                        <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ $issue->issue_key ?? 'ID:'.$issue->id }}</span>
+                                        {{-- ★修正: 文字列の日付をCarbonでパースしてチェック --}}
+                                        @if (isset($issue->due_date) && \Carbon\Carbon::parse($issue->due_date)->isPast())
                                             <span class="text-xs px-1.5 py-0.5 rounded-full bg-lask-warning-light text-lask-warning">期限切れ</span>
                                         @endif
                                     </div>
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{{ $issue->summary }}</h4>
+                                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{{ $issue->summary ?? '名称未設定' }}</h4>
                                     <div class="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        @if ($issue->due_date)
-                                            <span>期限: {{ $issue->due_date->format('m/d') }}</span>
+                                        @if (isset($issue->due_date))
+                                            <span>期限: {{ \Carbon\Carbon::parse($issue->due_date)->format('m/d') }}</span>
                                         @endif
-                                        @if ($issue->estimated_hours)
+                                        @if (isset($issue->estimated_hours))
                                             <span>{{ $issue->estimated_hours }}h</span>
                                         @endif
                                     </div>
@@ -345,22 +287,58 @@
                             @empty
                                 <div class="p-6 text-center text-gray-500 dark:text-gray-400">
                                     <p class="text-sm">課題がありません</p>
-                                    <a href="{{ route('backlog.issues') }}" class="text-lask-1 text-sm hover:underline">
+                                    <a href="#" class="text-lask-1 text-sm hover:underline">
                                         インポート →
                                     </a>
                                 </div>
                             @endforelse
                         </div>
-                        @if ($importedIssues->count() > 5)
-                            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-center">
-                                <a href="{{ route('backlog.issues') }}" class="text-sm text-lask-1 hover:underline">
-                                    すべて表示 ({{ $importedIssues->count() }}件) →
-                                </a>
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- ★ここが重要：Alpine.jsを使ったドラッグ＆ドロップとAPI通信の連携処理 --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('plans', {
+                items: @json($tasks), // コントローラーから渡されたタスク一覧
+
+                // ステータスごとのタスクを抽出する関数
+                getByStatus(status) {
+                    return this.items.filter(i => i.lane_status === status);
+                },
+
+                // ドラッグ＆ドロップで呼ばれる更新処理
+                async updateStatus(id, newStatus) {
+                    // 1. まず画面上の見た目を即座に更新
+                    const item = this.items.find(i => i.id == id);
+                    if (item) {
+                        item.lane_status = newStatus;
+                    }
+
+                    // 2. 裏側でAPIを呼んでデータベースに保存
+                    try {
+                        const response = await fetch(`/planning/tasks/${id}/status`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('保存に失敗しました');
+                        }
+                        console.log('データベース保存完了！');
+                    } catch (error) {
+                        console.error(error);
+                        alert('エラー：変更が保存されませんでした。リロードしてください。');
+                    }
+                }
+            });
+        });
+    </script>
 </x-app-layout>
