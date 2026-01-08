@@ -6,6 +6,7 @@ use App\Models\ImportedIssue;
 use App\Models\StudyPlan;
 use App\Models\Task;//追加（岡部条）
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -112,6 +113,57 @@ class PlanningController extends Controller
 
         return redirect()->route('planning.index')
             ->with('success', 'AI計画を生成しました！今日からの学習スケジュールを確認してください');
+    }
+
+    /**
+     * AI計画生成 API
+     */
+    public function apiGenerate(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        
+        // インポート済み課題を取得
+        $issues = ImportedIssue::where('user_id', $userId)
+            ->whereNotIn('status', ['完了', '処理済み'])
+            ->orderByRaw("CASE 
+                WHEN priority = '高' THEN 1 
+                WHEN priority = '中' THEN 2 
+                ELSE 3 
+            END")
+            ->orderBy('due_date')
+            ->get();
+
+        if ($issues->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => '計画を生成するには、まずBacklogから課題をインポートしてください',
+                'plans' => [],
+                'target_date' => today()->format('Y-m-d'),
+            ], 400);
+        }
+
+        // 今日以降の既存計画をクリア（重複を防ぐ）
+        StudyPlan::where('user_id', $userId)
+            ->where('scheduled_date', '>=', today())
+            ->where('status', 'planned')
+            ->delete();
+
+        // AI計画生成ロジック（モック）
+        $this->generateMockPlans($userId, $issues);
+
+        // 生成された計画を取得
+        $plans = StudyPlan::where('user_id', $userId)
+            ->where('scheduled_date', '>=', today())
+            ->orderBy('scheduled_date')
+            ->orderBy('scheduled_time')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => $plans->count() . '件の計画を生成しました',
+            'plans' => $plans,
+            'target_date' => today()->format('Y-m-d'),
+        ]);
     }
 
     /**

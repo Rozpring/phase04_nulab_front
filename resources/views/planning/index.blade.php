@@ -75,13 +75,10 @@
                                 </h3>
                                 <p class="text-lask-text-secondary text-sm">Backlogの課題から最適な学習スケジュールを自動生成します</p>
                             </div>
-                            <form method="POST" action="{{ route('planning.generate') }}">
-                                @csrf
-                                <button type="submit" class="px-6 py-3 bg-lask-accent text-white rounded-xl font-bold hover:bg-lask-accent-hover transition shadow-lg flex items-center gap-2">
-                                    <x-icon name="sparkles" class="w-5 h-5" />
-                                    計画を生成
-                                </button>
-                            </form>
+                            <button type="button" id="generate-plan-btn" class="px-6 py-3 bg-lask-accent text-white rounded-xl font-bold hover:bg-lask-accent-hover transition shadow-lg flex items-center gap-2">
+                                <x-icon name="sparkles" class="w-5 h-5" />
+                                計画を生成
+                            </button>
                         </div>
                     </div>
 
@@ -363,4 +360,44 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.getElementById('generate-plan-btn').addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            // ボタンを無効化してローディング表示
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>生成中...';
+            
+            try {
+                const response = await fetch('/api/planning/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 成功時はページをリロード
+                    window.location.reload();
+                } else {
+                    // エラー時はアラート表示
+                    alert(data.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                alert('計画の生成中にエラーが発生しました');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    </script>
 </x-app-layout>
