@@ -42,6 +42,14 @@
                 </div>
             @endif
 
+            {{-- API成功メッセージ表示用 --}}
+            <div id="api-success-message" class="hidden mb-6 p-4 bg-lask-success-light border border-lask-success text-lask-text-primary rounded-lg flex items-center gap-2 animate-pulse">
+                <svg class="w-5 h-5 flex-shrink-0 text-lask-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span id="api-success-text"></span>
+            </div>
+
             {{-- 統計カード --}}
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 mb-8">
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
@@ -361,7 +369,26 @@
         </div>
     </div>
 
+
+
     <script>
+        // リロード後にsessionStorageからメッセージを表示
+        document.addEventListener('DOMContentLoaded', function() {
+            const successMessage = sessionStorage.getItem('planGenerateSuccess');
+            if (successMessage) {
+                const msgEl = document.getElementById('api-success-message');
+                const textEl = document.getElementById('api-success-text');
+                textEl.textContent = successMessage;
+                msgEl.classList.remove('hidden');
+                sessionStorage.removeItem('planGenerateSuccess');
+                
+                // 5秒後に自動で非表示
+                setTimeout(() => {
+                    msgEl.classList.add('hidden');
+                }, 5000);
+            }
+        });
+
         document.getElementById('generate-plan-btn').addEventListener('click', async function() {
             const btn = this;
             const originalText = btn.innerHTML;
@@ -384,7 +411,8 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 成功時はページをリロード
+                    // 成功メッセージをsessionStorageに保存してリロード
+                    sessionStorage.setItem('planGenerateSuccess', data.message);
                     window.location.reload();
                 } else {
                     // エラー時はアラート表示
