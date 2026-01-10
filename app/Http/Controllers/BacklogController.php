@@ -71,6 +71,51 @@ class BacklogController extends Controller
     }
 
     /**
+     * 接続テスト（AJAXで呼び出される）
+     */
+    public function testConnection(Request $request)
+    {
+        $validated = $request->validate([
+            'space_url' => ['required', 'string'],
+            'api_key' => ['required', 'string'],
+        ]);
+
+        // space_urlにhttps://プレフィックスを追加
+        $spaceUrl = $validated['space_url'];
+        if (!str_starts_with($spaceUrl, 'http')) {
+            $spaceUrl = 'https://' . $spaceUrl;
+        }
+        $spaceUrl = rtrim($spaceUrl, '/');
+
+        try {
+            // Backlog APIを直接呼び出してテスト
+            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                ->get($spaceUrl . '/api/v2/users/myself', [
+                    'apiKey' => $validated['api_key'],
+                ]);
+
+            if ($response->successful()) {
+                $user = $response->json();
+                return response()->json([
+                    'success' => true,
+                    'message' => '接続に成功しました',
+                    'user' => $user['name'] ?? null,
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'APIキーまたはスペースURLが正しくありません: ' . $response->status(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => '接続に失敗しました: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * プロジェクト一覧取得
      */
     public function projects(): View
