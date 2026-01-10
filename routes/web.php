@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
     // Backlog連携
     Route::get('backlog/settings', [BacklogController::class, 'settings'])->name('backlog.settings');
     Route::post('backlog/settings', [BacklogController::class, 'saveSettings']);
+    Route::post('backlog/test-connection', [BacklogController::class, 'testConnection'])->name('backlog.test-connection');
     Route::get('backlog/projects', [BacklogController::class, 'projects'])->name('backlog.projects');
     Route::get('backlog/issues', [BacklogController::class, 'issues'])->name('backlog.issues');
     Route::post('backlog/import', [BacklogController::class, 'import'])->name('backlog.import');
