@@ -41,6 +41,13 @@ class BacklogController extends Controller
      */
     public function saveSettings(Request $request): RedirectResponse
     {
+        // space_urlにhttps://プレフィックスを追加（入力フィールドはドメイン名のみ）
+        $spaceUrl = $request->input('space_url');
+        if ($spaceUrl && !str_starts_with($spaceUrl, 'http')) {
+            $spaceUrl = 'https://' . $spaceUrl;
+        }
+        $request->merge(['space_url' => $spaceUrl]);
+
         $validated = $request->validate([
             'space_url' => ['required', 'url'],
             'api_key' => ['required', 'string'],

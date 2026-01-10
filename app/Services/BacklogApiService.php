@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\BacklogSetting;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Exception;
@@ -11,6 +13,9 @@ use Exception;
  * 
  * Backlog APIとの通信を担当するサービスクラス。
  * レートリミット対応、ページネーション処理を含む。
+ * 
+ * 認証情報はデータベース(BacklogSetting)から優先的に読み込み、
+ * 未設定の場合は.env(config/backlog.php)をフォールバックとして使用。
  */
 class BacklogApiService
 {
@@ -23,8 +28,10 @@ class BacklogApiService
 
     public function __construct()
     {
-        $this->spaceUrl = config('backlog.space_url') ? rtrim(config('backlog.space_url'), '/') : null;
-        $this->apiKey = config('backlog.api_key');
+        // データベースから認証情報を取得（ログイン中のユーザー）
+        $this->loadCredentials();
+        
+        // その他の設定はconfigから
         $this->timeout = config('backlog.timeout', 30);
         $this->retryAfter = config('backlog.rate_limit.retry_after', 60);
         $this->maxRetries = config('backlog.rate_limit.max_retries', 3);
@@ -32,12 +39,51 @@ class BacklogApiService
     }
 
     /**
+     * 認証情報をロード（DB優先、configフォールバック）
+     */
+    protected function loadCredentials(): void
+    {
+        $this->spaceUrl = null;
+        $this->apiKey = null;
+
+        // 認証済みユーザーがいる場合、DBから取得
+        if (Auth::check()) {
+            $setting = BacklogSetting::where('user_id', Auth::id())->first();
+            if ($setting && $setting->space_url && $setting->api_key) {
+                $this->spaceUrl = rtrim($setting->space_url, '/');
+                $this->apiKey = $setting->api_key;
+                return;
+            }
+        }
+
+        // フォールバック: configから取得
+        $configUrl = config('backlog.space_url');
+        $configKey = config('backlog.api_key');
+        
+        if ($configUrl && $configKey) {
+            $this->spaceUrl = rtrim($configUrl, '/');
+            $this->apiKey = $configKey;
+        }
+    }
+
+    /**
+     * 認証情報を再読み込み（設定保存後に呼び出す用）
+     */
+    public function refreshCredentials(): void
+    {
+        $this->loadCredentials();
+    }
+
+    /**
      * API認証情報が設定されているかチェック
      */
     protected function ensureConfigured(): void
     {
+        // 最新の認証情報を取得
+        $this->loadCredentials();
+        
         if (empty($this->spaceUrl) || empty($this->apiKey)) {
-            throw new Exception('Backlog API credentials are not configured. Please set BACKLOG_SPACE_URL and BACKLOG_API_KEY in .env file.');
+            throw new Exception('Backlog APIの認証情報が設定されていません。Backlog連携設定画面からスペースURLとAPIキーを設定してください。');
         }
     }
 
