@@ -230,8 +230,8 @@ class PlanningController extends Controller
                     $lunchBreakAdded = false;
                 }
 
-                $endMinutes = $currentHour * 60 + $blockDuration;
-                $endTime = Carbon::createFromTime(floor($endMinutes / 60), $endMinutes % 60);
+                $endMinutes = (int)($currentHour * 60 + $blockDuration);
+                $endTime = Carbon::createFromTime((int)floor($endMinutes / 60), $endMinutes % 60);
 
                 // AIの推奨理由を生成
                 $reason = $this->generateAiReason($issue, $i === 0);
@@ -243,7 +243,7 @@ class PlanningController extends Controller
                     'description' => $issue->description,
                     'plan_type' => str_contains(strtolower($issue->issue_key), 'study') ? 'study' : 'work',
                     'scheduled_date' => $currentDate,
-                    'scheduled_time' => Carbon::createFromTime($currentHour, 0),
+                    'scheduled_time' => Carbon::createFromTime((int)$currentHour, 0),
                     'end_time' => $endTime,
                     'duration_minutes' => (int) $blockDuration,
                     'priority' => $issue->priority === '高' ? 9 : ($issue->priority === '中' ? 5 : 3),
