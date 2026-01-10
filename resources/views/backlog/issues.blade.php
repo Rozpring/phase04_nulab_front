@@ -50,7 +50,8 @@
                                     <option value="中" {{ request('priority') == '中' ? 'selected' : '' }}>中</option>
                                     <option value="低" {{ request('priority') == '低' ? 'selected' : '' }}>低</option>
                                 </select>
-                                <button type="submit" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-500">
+                                <button type="submit" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center gap-1.5">
+                                    <x-icon name="funnel" class="w-4 h-4" />
                                     絞り込み
                                 </button>
                             </form>

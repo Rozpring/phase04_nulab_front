@@ -45,7 +45,8 @@
                             <div>
                                 <x-input-label for="space_url" value="BacklogスペースURL" />
                                 <div class="mt-1 flex rounded-lg shadow-sm">
-                                    <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                                    <span class="inline-flex items-center gap-1.5 px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                                        <x-icon name="globe-alt" class="w-4 h-4" />
                                         https://
                                     </span>
                                     <input 
@@ -68,12 +69,15 @@
                             <div>
                                 <x-input-label for="api_key" value="APIキー" />
                                 <div class="mt-1 relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 dark:text-gray-400">
+                                        <x-icon name="key" class="w-4 h-4" />
+                                    </div>
                                     <input 
                                         type="password" 
                                         id="api_key" 
                                         name="api_key" 
                                         value="{{ old('api_key', $setting->api_key) }}"
-                                        class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 pr-10"
+                                        class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 pl-10 pr-10"
                                         placeholder="APIキーを入力"
                                         required
                                     >

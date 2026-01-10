@@ -53,20 +53,40 @@
             {{-- 統計カード --}}
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 mb-8">
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
-                    <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['pending_issues'] }}</div>
-                    <div class="text-lask-text-secondary text-sm mt-1">未消化の課題</div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-lask-accent-subtle flex items-center justify-center">
+                            <x-icon name="clipboard-document-list" class="w-5 h-5 text-lask-1" />
+                        </div>
+                        <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['pending_issues'] }}</div>
+                    </div>
+                    <div class="text-lask-text-secondary text-sm">未消化の課題</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
-                    <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['today_plans'] }}</div>
-                    <div class="text-lask-text-secondary text-sm mt-1">今日の計画</div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-lask-accent-subtle flex items-center justify-center">
+                            <x-icon name="calendar" class="w-5 h-5 text-lask-1" />
+                        </div>
+                        <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['today_plans'] }}</div>
+                    </div>
+                    <div class="text-lask-text-secondary text-sm">今日の計画</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
-                    <div class="text-3xl font-bold text-lask-text-primary">{{ number_format($stats['today_hours'], 1) }}h</div>
-                    <div class="text-lask-text-secondary text-sm mt-1">今日の学習時間</div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-lask-accent-subtle flex items-center justify-center">
+                            <x-icon name="clock" class="w-5 h-5 text-lask-1" />
+                        </div>
+                        <div class="text-3xl font-bold text-lask-text-primary">{{ number_format($stats['today_hours'], 1) }}h</div>
+                    </div>
+                    <div class="text-lask-text-secondary text-sm">今日の学習時間</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 lg:p-6 shadow-sm">
-                    <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['week_plans'] }}</div>
-                    <div class="text-lask-text-secondary text-sm mt-1">今週の計画</div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-lask-accent-subtle flex items-center justify-center">
+                            <x-icon name="chart-bar" class="w-5 h-5 text-lask-1" />
+                        </div>
+                        <div class="text-3xl font-bold text-lask-text-primary">{{ $stats['week_plans'] }}</div>
+                    </div>
+                    <div class="text-lask-text-secondary text-sm">今週の計画</div>
                 </div>
             </div>
 
