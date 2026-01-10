@@ -299,36 +299,12 @@
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden" x-data="{
                         analysisStarted: false,
                         analyzing: false,
-                        extraAdvice: [],
                         startAnalysis() {
                             this.analyzing = true;
-                            // ダミーの分析処理（2秒後に結果を表示）
+                            // ローディングアニメーション後に「近日公開」メッセージを表示
                             setTimeout(() => {
                                 this.analyzing = false;
                                 this.analysisStarted = true;
-                                this.extraAdvice = [
-                                    {
-                                        type: 'insight',
-                                        icon: 'chart-bar',
-                                        title: '作業パターンの発見',
-                                        content: '午前中（9:00-12:00）の生産性が最も高い傾向があります。重要なタスクはこの時間帯に配置することをお勧めします。',
-                                        priority: 'recommended'
-                                    },
-                                    {
-                                        type: 'action',
-                                        icon: 'exclamation-triangle',
-                                        title: '長時間タスクの分割',
-                                        content: '2時間以上のタスクは失敗率が高くなっています。45分単位に分割すると完了率が向上する可能性があります。',
-                                        priority: 'urgent'
-                                    },
-                                    {
-                                        type: 'positive',
-                                        icon: 'trophy',
-                                        title: '素晴らしい進捗！',
-                                        content: '先週と比べて完了率が15%向上しています。この調子を維持しましょう！',
-                                        priority: 'reference'
-                                    }
-                                ];
                             }, 1500);
                         }
                     }">
@@ -339,7 +315,7 @@
                             </h3>
                             <button 
                                 @click="startAnalysis()" 
-                                :disabled="analyzing"
+                                :disabled="analyzing || analysisStarted"
                                 class="px-4 py-2 bg-lask-accent text-white text-sm font-medium rounded-lg hover:opacity-80 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <template x-if="!analyzing">
@@ -374,47 +350,28 @@
                                 @endforelse
                             </div>
                             
-                            {{-- AI分析結果（ダミー） --}}
-                            <template x-for="(item, index) in extraAdvice" :key="index">
-                                <div 
-                                    class="rounded-xl p-4 border transition-all hover:shadow-md hover:-translate-y-0.5"
-                                    :class="{
-                                        'bg-lask-success-light border-lask-success': item.type === 'positive',
-                                        'bg-lask-accent-subtle border-lask-accent': item.type === 'action',
-                                        'bg-[var(--color-1)]/20 border-lask-1': item.type === 'insight'
-                                    }"
-                                    x-show="analysisStarted"
-                                    x-transition:enter="transition ease-out duration-300"
-                                    x-transition:enter-start="opacity-0 translate-y-4"
-                                    x-transition:enter-end="opacity-100 translate-y-0"
-                                    :style="{ transitionDelay: (index * 200) + 'ms' }"
-                                >
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 flex-shrink-0" :class="{
-                                            'text-lask-success': item.type === 'positive',
-                                            'text-lask-1': item.type === 'action',
-                                            'text-lask-1': item.type === 'insight'
-                                        }">
-                                            <x-icon name="sparkles" class="w-6 h-6" />
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <h4 class="font-bold text-gray-900 dark:text-gray-100 text-sm" x-text="item.title"></h4>
-                                                <span 
-                                                    class="px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0"
-                                                    :class="{
-                                                        'bg-lask-warning-light text-lask-warning': item.priority === 'urgent',
-                                                        'bg-lask-accent-subtle text-lask-1': item.priority === 'recommended',
-                                                        'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400': item.priority === 'reference'
-                                                    }"
-                                                    x-text="item.priority === 'urgent' ? '緊急' : (item.priority === 'recommended' ? '推奨' : '参考')"
-                                                ></span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400" x-text="item.content"></p>
-                                        </div>
-                                    </div>
+                            {{-- AI分析結果 - 近日公開プレースホルダー --}}
+                            <div 
+                                x-show="analysisStarted"
+                                x-transition:enter="transition ease-out duration-500"
+                                x-transition:enter-start="opacity-0 translate-y-4"
+                                x-transition:enter-end="opacity-100 translate-y-0"
+                                class="text-center py-12"
+                            >
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lask-accent-subtle mb-4">
+                                    <x-icon name="wrench-screwdriver" class="w-8 h-8 text-lask-1" />
                                 </div>
-                            </template>
+                                <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">AI分析機能は準備中です</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">
+                                    現在バックエンドAPIを開発中です。<br>
+                                    完成次第、あなたの作業パターンを分析し<br>
+                                    パーソナライズされたアドバイスを提供します。
+                                </p>
+                                <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-600 dark:text-gray-400">
+                                    <x-icon name="clock" class="w-4 h-4" />
+                                    Coming Soon
+                                </div>
+                            </div>
                         </div>
                     </div>
 
