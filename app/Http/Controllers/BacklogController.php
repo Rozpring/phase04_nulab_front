@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BacklogSetting;
 use App\Models\ImportedIssue;
-use App\Services\BacklogMockService;
+use App\Services\BacklogApiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +13,7 @@ use Illuminate\View\View;
 class BacklogController extends Controller
 {
     public function __construct(
-        private readonly BacklogMockService $backlogService
+        private readonly BacklogApiService $backlogService
     ) {}
 
     /**
@@ -24,9 +24,16 @@ class BacklogController extends Controller
         $setting = BacklogSetting::firstOrNew(['user_id' => Auth::id()]);
         
         // サービスからプロジェクト一覧を取得
-        $projects = $this->backlogService->getProjects();
+        $projects = [];
+        $apiError = null;
+        
+        try {
+            $projects = $this->backlogService->getProjects();
+        } catch (\Exception $e) {
+            $apiError = 'Backlog APIへの接続に失敗しました: ' . $e->getMessage();
+        }
 
-        return view('backlog.settings', compact('setting', 'projects'));
+        return view('backlog.settings', compact('setting', 'projects', 'apiError'));
     }
 
     /**
@@ -61,7 +68,11 @@ class BacklogController extends Controller
      */
     public function projects(): View
     {
-        $projects = $this->backlogService->getProjects();
+        try {
+            $projects = $this->backlogService->getProjects();
+        } catch (\Exception $e) {
+            $projects = [];
+        }
         return view('backlog.projects', compact('projects'));
     }
 
@@ -73,7 +84,14 @@ class BacklogController extends Controller
         $setting = BacklogSetting::where('user_id', Auth::id())->first();
         
         // サービスから課題一覧を取得
-        $backlogIssues = $this->backlogService->getIssues();
+        $backlogIssues = [];
+        $apiError = null;
+        
+        try {
+            $backlogIssues = $this->backlogService->getIssues();
+        } catch (\Exception $e) {
+            $apiError = 'Backlog APIへの接続に失敗しました: ' . $e->getMessage();
+        }
         
         // インポート済み課題のIDを取得
         $importedIssueIds = ImportedIssue::where('user_id', Auth::id())
@@ -98,7 +116,7 @@ class BacklogController extends Controller
             ->orderBy('due_date')
             ->get();
 
-        return view('backlog.issues', compact('backlogIssues', 'importedIssueIds', 'importedIssues', 'setting'));
+        return view('backlog.issues', compact('backlogIssues', 'importedIssueIds', 'importedIssues', 'setting', 'apiError'));
     }
 
     /**
