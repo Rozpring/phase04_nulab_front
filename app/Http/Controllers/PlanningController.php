@@ -151,17 +151,38 @@ class PlanningController extends Controller
         // AI計画生成ロジック（モック）
         $this->generateMockPlans($userId, $issues);
 
-        // 生成された計画を取得
+        // 生成された計画を取得（関連するImportedIssueも取得）
         $plans = StudyPlan::where('user_id', $userId)
             ->where('scheduled_date', '>=', today())
+            ->with('importedIssue')
             ->orderBy('scheduled_date')
             ->orderBy('scheduled_time')
             ->get();
 
+        // 期待されるレスポンス形式に変換
+        $formattedPlans = $plans->map(function ($plan) {
+            // 数値優先度を日本語文字列に変換
+            $priorityMap = [
+                9 => '高',
+                5 => '中',
+                3 => '低',
+            ];
+            $priorityString = $priorityMap[$plan->priority] ?? '中';
+
+            return [
+                'id' => $plan->id,
+                'issue_key' => $plan->importedIssue?->issue_key ?? null,
+                'title' => $plan->title,
+                'planned_minutes' => $plan->duration_minutes,
+                'priority' => $priorityString,
+                'ai_comment' => $plan->ai_reason,
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'message' => $plans->count() . '件の計画を生成しました',
-            'plans' => $plans,
+            'plans' => $formattedPlans,
             'target_date' => today()->format('Y-m-d'),
         ]);
     }
