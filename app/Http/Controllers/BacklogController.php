@@ -135,12 +135,14 @@ class BacklogController extends Controller
     {
         $setting = BacklogSetting::where('user_id', Auth::id())->first();
         
-        // サービスから課題一覧を取得
+        // サービスから課題一覧を取得（選択されたプロジェクトでフィルタリング）
         $backlogIssues = [];
         $apiError = null;
         
         try {
-            $backlogIssues = $this->backlogService->getIssues();
+            // 選択されたプロジェクトIDを取得
+            $projectId = $setting?->selected_project_id ? (int) $setting->selected_project_id : null;
+            $backlogIssues = $this->backlogService->getIssues(null, $projectId);
         } catch (\Exception $e) {
             $apiError = 'Backlog APIへの接続に失敗しました: ' . $e->getMessage();
         }

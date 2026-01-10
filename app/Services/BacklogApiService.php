@@ -88,12 +88,13 @@ class BacklogApiService
     }
 
     /**
-     * 課題一覧を取得（差分更新対応）
+     * 課題一覧を取得（差分更新対応、プロジェクトフィルタ対応）
      *
      * @param string|null $updatedSince 更新日時フィルタ (yyyy-MM-dd形式)
+     * @param int|null $projectId プロジェクトIDでフィルタリング
      * @return array
      */
-    public function getIssues(?string $updatedSince = null): array
+    public function getIssues(?string $updatedSince = null, ?int $projectId = null): array
     {
         $this->ensureConfigured();
 
@@ -106,6 +107,11 @@ class BacklogApiService
                 'count' => $this->paginationCount,
                 'offset' => $offset,
             ];
+
+            // プロジェクトIDでフィルタリング
+            if ($projectId) {
+                $params['projectId[]'] = $projectId;
+            }
 
             if ($updatedSince) {
                 $params['updatedSince'] = $updatedSince;
