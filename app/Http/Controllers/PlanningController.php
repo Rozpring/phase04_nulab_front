@@ -438,6 +438,32 @@ class PlanningController extends Controller
             'task' => $task
         ]);
     }
-}
 
-//追加ここまで
+    /**
+     * タスクのステータス更新 API
+     */
+    public function updateStatus(Request $request, StudyPlan $studyPlan): JsonResponse
+    {
+        // ユーザー認可チェック
+        if ($studyPlan->user_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => '権限がありません',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:planned,in_progress,completed,skipped'],
+        ]);
+
+        $studyPlan->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ステータスを更新しました',
+            'plan' => $studyPlan,
+        ]);
+    }
+}
