@@ -431,18 +431,18 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 成功メッセージをsessionStorageに保存してリロード
-                    sessionStorage.setItem('planGenerateSuccess', data.message);
-                    window.location.reload();
+                    // 成功メッセージをトーストで表示してリロード
+                    Alpine.store('notifications')?.showToast(data.message, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    // エラー時はアラート表示
-                    alert(data.message);
+                    // エラー時はトースト通知で表示
+                    Alpine.store('notifications')?.showToast(data.message || '計画の生成に失敗しました', 'error');
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 }
             } catch (error) {
                 console.error('API Error:', error);
-                alert('計画の生成中にエラーが発生しました');
+                Alpine.store('notifications')?.showToast('計画の生成中にエラーが発生しました', 'error');
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }

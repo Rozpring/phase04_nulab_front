@@ -143,8 +143,16 @@
                                                 body: JSON.stringify({ space_url: document.getElementById('space_url').value, api_key: document.getElementById('api_key').value })
                                             })
                                             .then(r => r.json())
-                                            .then(d => { result = d.success ? 'success' : 'error'; testing = false; })
-                                            .catch(() => { result = 'error'; testing = false; })"
+                                            .then(d => { 
+                                                result = d.success ? 'success' : 'error'; 
+                                                testing = false;
+                                                Alpine.store('notifications')?.showToast(d.success ? '接続に成功しました' : '接続に失敗しました。設定を確認してください', d.success ? 'success' : 'error');
+                                            })
+                                            .catch(() => { 
+                                                result = 'error'; 
+                                                testing = false;
+                                                Alpine.store('notifications')?.showToast('接続テスト中にエラーが発生しました', 'error');
+                                            })"
                                         class="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
                                         :disabled="testing"
                                     >
