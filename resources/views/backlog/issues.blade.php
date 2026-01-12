@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Backlog課題インポート') }}
+                {{ __('Backlogタスク追加') }}
             </h2>
             <a href="{{ route('backlog.settings') }}" class="text-lask-1 hover:opacity-80 text-sm font-medium flex items-center gap-1">
                 <x-icon name="cog-6-tooth" class="w-4 h-4" />
@@ -22,13 +22,13 @@
             @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {{-- 左側: Backlog課題一覧 --}}
+                {{-- 左側: Backlogタスク一覧 --}}
                 <div class="lg:col-span-2">
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                                 <x-icon name="clipboard-document-list" class="w-6 h-6 mr-2 text-lask-1" />
-                                Backlogの課題
+                                Backlogのタスク
                             </h3>
                             <span class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ count($backlogIssues) }}件
@@ -124,12 +124,12 @@
                                 @empty
                                     <div class="p-8 text-center text-gray-500 dark:text-gray-400">
                                         <x-icon name="inbox" class="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                        <p>課題が見つかりませんでした</p>
+                                        <p>タスクが見つかりませんでした</p>
                                     </div>
                                 @endforelse
                             </div>
 
-                            {{-- インポートボタン --}}
+                            {{-- 追加ボタン --}}
                             @if (count($backlogIssues) > 0)
                                 <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
                                     <div class="flex items-center justify-between">
@@ -141,7 +141,7 @@
                                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                                             </svg>
-                                            選択した課題をインポート
+                                            選択したタスクを追加
                                         </x-primary-button>
                                     </div>
                                 </div>
@@ -150,13 +150,13 @@
                     </div>
                 </div>
 
-                {{-- 右側: インポート済み課題 --}}
+                {{-- 右側: 追加済みタスク --}}
                 <div>
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                                 <x-icon name="check-circle" class="w-6 h-6 mr-2 text-emerald-500" />
-                                インポート済み
+                                追加済み
                             </h3>
                         </div>
                         <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-[28rem] overflow-y-auto">
@@ -206,8 +206,8 @@
                             @empty
                                 <div class="p-8 text-center">
                                     <x-icon name="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">まだインポートされた課題はありません</p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500">左側のリストから課題を選択してインポートしてください</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">まだ追加されたタスクはありません</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">左側のリストからタスクを選択して追加してください</p>
                                 </div>
                             @endforelse
                         </div>
@@ -230,11 +230,11 @@
                         <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                             <li class="flex items-center gap-2">
                                 <span class="w-5 h-5 bg-lask-accent-subtle text-lask-1 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                                <span>インポートしたい課題を選択</span>
+                                <span>追加したいタスクを選択</span>
                             </li>
                             <li class="flex items-center gap-2">
                                 <span class="w-5 h-5 bg-lask-accent-subtle text-lask-1 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                                <span>「インポート」ボタンをクリック</span>
+                                <span>「タスクを追加」ボタンをクリック</span>
                             </li>
                             <li class="flex items-center gap-2">
                                 <span class="w-5 h-5 bg-lask-accent-subtle text-lask-1 rounded-full flex items-center justify-center text-xs font-bold">3</span>
