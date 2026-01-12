@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\ImportedIssue;
 use App\Models\StudyPlan;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class AnalysisController extends Controller
@@ -35,6 +38,133 @@ class AnalysisController extends Controller
     {
         return view('analysis.report');
     }
+
+    /**
+     * AI分析アドバイスAPI
+     */
+    public function apiAdvice(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        $targetDate = $request->input('date', today()->format('Y-m-d'));
+        $refresh = $request->boolean('refresh', false);
+        
+        $cacheKey = "analysis_advice_{$userId}_{$targetDate}";
+        
+        // キャッシュ削除リクエストの場合
+        if ($refresh) {
+            Cache::forget($cacheKey);
+        }
+        
+        // キャッシュをチェック
+        $cached = Cache::has($cacheKey);
+        
+        $advice = Cache::remember($cacheKey, now()->addHours(1), function () use ($userId, $targetDate) {
+            return $this->generateApiAdvice($userId, $targetDate);
+        });
+        
+        return response()->json([
+            'success' => true,
+            'cached' => $cached && !request()->boolean('refresh'),
+            'data' => [
+                'target_date' => $targetDate,
+                'advice' => $advice,
+            ],
+        ]);
+    }
+
+    /**
+     * API用アドバイス生成
+     */
+    private function generateApiAdvice(int $userId, string $targetDate): array
+    {
+        $startDate = now()->subDays(7);
+        $plans = StudyPlan::where('user_id', $userId)
+            ->where('scheduled_date', '>=', $startDate)
+            ->get();
+        
+        $totalPlans = $plans->count();
+        $completedPlans = $plans->where('status', 'completed')->count();
+        $skippedPlans = $plans->where('status', 'skipped')->count();
+        $plannedPlans = $plans->where('status', 'planned')->count();
+        
+        $advice = [];
+        
+        // 未着手タスクがある場合
+        if ($plannedPlans > 0) {
+            $advice[] = [
+                'title' => '未着手タスクへの着手',
+                'description' => "登録された{$plannedPlans}件のタスクが未着手状態です。まずは1件だけでも着手し、タスクの状態を更新する習慣をつけましょう。",
+                'tag' => '緊急',
+                'type' => 'warning',
+            ];
+        }
+        
+        // 完了タスクがない場合
+        if ($completedPlans === 0 && $totalPlans > 0) {
+            $advice[] = [
+                'title' => 'タスクの細分化と完了体験',
+                'description' => '完了タスクがないため、タスクが大きすぎる可能性があります。小さく分割し、短時間で完了できるタスクから取り組み、達成感を増やしましょう。',
+                'tag' => '推奨',
+                'type' => 'recommend',
+            ];
+        }
+        
+        // スキップ率が高い場合
+        if ($totalPlans > 0 && ($skippedPlans / $totalPlans) > 0.2) {
+            $skipRate = round(($skippedPlans / $totalPlans) * 100);
+            $advice[] = [
+                'title' => '計画の見直し',
+                'description' => "スキップ率が{$skipRate}%と高めです。見積もり時間を短くするか、タスクを分割して取り組みやすくしましょう。",
+                'tag' => '推奨',
+                'type' => 'recommend',
+            ];
+        }
+        
+        // データが少ない場合
+        if ($totalPlans === 0) {
+            $advice[] = [
+                'title' => '日々の作業記録の徹底',
+                'description' => '日別の作業記録がありません。タスクに着手したら、必ず実績時間や進捗状況を記録する習慣をつけましょう。',
+                'tag' => '推奨',
+                'type' => 'recommend',
+            ];
+        }
+        
+        // 良いパフォーマンスの場合
+        if ($totalPlans > 0 && $completedPlans > 0) {
+            $completionRate = round(($completedPlans / $totalPlans) * 100);
+            if ($completionRate >= 70) {
+                $advice[] = [
+                    'title' => '素晴らしい進捗です',
+                    'description' => "完了率{$completionRate}%は優秀です。この調子で継続しましょう！",
+                    'tag' => '参考',
+                    'type' => 'info',
+                ];
+            }
+        }
+        
+        // 最低3件のアドバイスを返す
+        $defaultAdvice = [
+            [
+                'title' => '継続的な記録の重要性',
+                'description' => '毎日の作業を記録することで、AIがより正確なアドバイスを提供できるようになります。',
+                'tag' => '参考',
+                'type' => 'info',
+            ],
+        ];
+        
+        while (count($advice) < 3) {
+            $advice[] = array_shift($defaultAdvice) ?? [
+                'title' => '定期的な振り返り',
+                'description' => '週に一度、完了したタスクと未完了のタスクを振り返り、次週の計画に活かしましょう。',
+                'tag' => '参考',
+                'type' => 'info',
+            ];
+        }
+        
+        return array_slice($advice, 0, 3);
+    }
+
 
     /**
      * 統計情報を計算

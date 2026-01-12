@@ -319,13 +319,44 @@
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden" x-data="{
                         analysisStarted: false,
                         analyzing: false,
-                        startAnalysis() {
+                        apiAdvice: [],
+                        error: null,
+                        async startAnalysis() {
                             this.analyzing = true;
-                            // ローディングアニメーション後に「近日公開」メッセージを表示
-                            setTimeout(() => {
+                            this.error = null;
+                            try {
+                                const response = await fetch('/api/analysis/advice', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]')?.content || '',
+                                        'Accept': 'application/json'
+                                    },
+                                    body: JSON.stringify({ refresh: true })
+                                });
+                                const data = await response.json();
+                                if (data.success) {
+                                    this.apiAdvice = data.data.advice;
+                                    this.analysisStarted = true;
+                                } else {
+                                    this.error = 'アドバイスの取得に失敗しました';
+                                }
+                            } catch (e) {
+                                this.error = 'APIエラーが発生しました';
+                                console.error(e);
+                            } finally {
                                 this.analyzing = false;
-                                this.analysisStarted = true;
-                            }, 1500);
+                            }
+                        },
+                        getTagClass(type) {
+                            if (type === 'warning') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                            if (type === 'recommend') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+                            return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+                        },
+                        getIcon(type) {
+                            if (type === 'warning') return 'exclamation-triangle';
+                            if (type === 'recommend') return 'light-bulb';
+                            return 'information-circle';
                         }
                     }">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -335,13 +366,13 @@
                             </h3>
                             <button 
                                 @click="startAnalysis()" 
-                                :disabled="analyzing || analysisStarted"
+                                :disabled="analyzing"
                                 class="px-4 py-2 bg-lask-accent text-white text-sm font-medium rounded-lg hover:opacity-80 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <template x-if="!analyzing">
                                     <span class="flex items-center gap-2">
                                         <x-icon name="sparkles" class="w-4 h-4" />
-                                        分析を開始
+                                        <span x-text="analysisStarted ? '再分析' : '分析を開始'"></span>
                                     </span>
                                 </template>
                                 <template x-if="analyzing">
@@ -356,7 +387,7 @@
                             </button>
                         </div>
                         <div class="p-4 space-y-3">
-                            {{-- 分析開始前のみ表示 --}}
+                            {{-- 分析開始前のみ表示（サーバー側のアドバイス） --}}
                             <div x-show="!analysisStarted" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
                                 @forelse ($advice as $item)
                                     <div class="mb-3">
@@ -365,32 +396,59 @@
                                 @empty
                                     <div class="text-center py-6 text-gray-500 dark:text-gray-400">
                                         <x-icon name="cpu-chip" class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                                        <p class="text-sm">アドバイスを生成するにはもっとデータが必要です</p>
+                                        <p class="text-sm">「分析を開始」ボタンをクリックしてAIアドバイスを取得してください</p>
                                     </div>
                                 @endforelse
                             </div>
                             
-                            {{-- AI分析結果 - 近日公開プレースホルダー --}}
+                            {{-- エラー表示 --}}
+                            <div x-show="error" x-cloak class="text-center py-6">
+                                <div class="text-red-500 dark:text-red-400">
+                                    <x-icon name="exclamation-circle" class="w-8 h-8 mx-auto mb-2" />
+                                    <p x-text="error"></p>
+                                </div>
+                            </div>
+                            
+                            {{-- API分析結果 --}}
                             <div 
-                                x-show="analysisStarted"
+                                x-show="analysisStarted && !error"
                                 x-transition:enter="transition ease-out duration-500"
                                 x-transition:enter-start="opacity-0 translate-y-4"
                                 x-transition:enter-end="opacity-100 translate-y-0"
-                                class="text-center py-12"
+                                class="space-y-3"
                             >
-                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lask-accent-subtle mb-4">
-                                    <x-icon name="wrench-screwdriver" class="w-8 h-8 text-lask-1" />
-                                </div>
-                                <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">AI分析機能は準備中です</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">
-                                    現在バックエンドAPIを開発中です。<br>
-                                    完成次第、あなたの作業パターンを分析し<br>
-                                    パーソナライズされたアドバイスを提供します。
-                                </p>
-                                <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-600 dark:text-gray-400">
-                                    <x-icon name="clock" class="w-4 h-4" />
-                                    Coming Soon
-                                </div>
+                                <template x-for="(item, index) in apiAdvice" :key="index">
+                                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex-shrink-0">
+                                                <div :class="getTagClass(item.type)" class="w-8 h-8 rounded-lg flex items-center justify-center">
+                                                    <template x-if="item.type === 'warning'">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                                        </svg>
+                                                    </template>
+                                                    <template x-if="item.type === 'recommend'">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                        </svg>
+                                                    </template>
+                                                    <template x-if="item.type === 'info'">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                        </svg>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100" x-text="item.title"></h4>
+                                                    <span :class="getTagClass(item.type)" class="px-2 py-0.5 text-xs font-medium rounded-full" x-text="item.tag"></span>
+                                                </div>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400" x-text="item.description"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
