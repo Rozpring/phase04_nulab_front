@@ -16,18 +16,18 @@
     {{-- ヘッダー --}}
     <div 
         class="px-4 py-3 flex items-center justify-between"
-        :class="$store.pomodoro.isBreak ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-indigo-50 dark:bg-indigo-900/20'"
+        :class="$store.pomodoro.isBreak ? 'bg-lask-success-light dark:bg-lask-success/10' : 'bg-lask-accent-subtle dark:bg-lask-accent/10'"
     >
         <div class="flex items-center gap-2">
             <template x-if="$store.pomodoro.isBreak">
-                <x-icon name="sun" class="w-5 h-5 text-amber-500" />
+                <x-icon name="sun" class="w-5 h-5 text-lask-success" />
             </template>
             <template x-if="!$store.pomodoro.isBreak">
-                <x-icon name="clock" class="w-5 h-5 text-indigo-500" />
+                <x-icon name="clock" class="w-5 h-5 text-lask-1" />
             </template>
             <span class="font-semibold text-gray-800 dark:text-gray-200" x-text="$store.pomodoro.isBreak ? '休憩タイム' : 'ポモドーロ'"></span>
         </div>
-        <div class="text-xs px-2 py-1 rounded-full" :class="$store.pomodoro.isBreak ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'">
+        <div class="text-xs px-2 py-1 rounded-full" :class="$store.pomodoro.isBreak ? 'bg-lask-success/20 text-lask-success dark:bg-lask-success/30' : 'bg-lask-accent/20 text-lask-accent dark:bg-lask-accent/30'">
             <span x-text="$store.pomodoro.isBreak ? '5分' : '25分'"></span>
         </div>
     </div>
@@ -36,7 +36,7 @@
     <div class="p-6 text-center">
         <div 
             class="text-6xl font-mono font-bold mb-4"
-            :class="$store.pomodoro.isBreak ? 'text-amber-600 dark:text-amber-400' : 'text-indigo-600 dark:text-indigo-400'"
+            :class="$store.pomodoro.isBreak ? 'text-lask-success' : 'text-lask-1'"
             x-text="$store.pomodoro.formattedTime"
         ></div>
         
@@ -44,7 +44,7 @@
         <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-4">
             <div 
                 class="h-full transition-all duration-1000 rounded-full"
-                :class="$store.pomodoro.isBreak ? 'bg-amber-500' : 'bg-indigo-500'"
+                :class="$store.pomodoro.isBreak ? 'bg-lask-success' : 'bg-lask-accent'"
                 :style="`width: ${((($store.pomodoro.isBreak ? $store.pomodoro.breakDuration : $store.pomodoro.workDuration) - $store.pomodoro.timeLeft) / ($store.pomodoro.isBreak ? $store.pomodoro.breakDuration : $store.pomodoro.workDuration)) * 100}%`"
             ></div>
         </div>
@@ -56,7 +56,7 @@
                 x-show="!$store.pomodoro.isRunning"
                 @click="$store.pomodoro.isRunning ? $store.pomodoro.pause() : ($store.pomodoro.timeLeft > 0 ? $store.pomodoro.resume() : $store.pomodoro.start())"
                 class="p-4 rounded-full transition shadow-lg"
-                :class="$store.pomodoro.isBreak ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white'"
+                :class="$store.pomodoro.isBreak ? 'bg-lask-success hover:opacity-90 text-white' : 'bg-lask-accent hover:bg-lask-accent-hover text-white'"
             >
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z"/>
@@ -67,7 +67,7 @@
                 x-show="$store.pomodoro.isRunning"
                 @click="$store.pomodoro.pause()"
                 class="p-4 rounded-full transition shadow-lg"
-                :class="$store.pomodoro.isBreak ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white'"
+                :class="$store.pomodoro.isBreak ? 'bg-lask-success hover:opacity-90 text-white' : 'bg-lask-accent hover:bg-lask-accent-hover text-white'"
             >
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
