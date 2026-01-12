@@ -17,36 +17,28 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-lask-accent-subtle flex items-center justify-center">
-                            <x-icon name="clipboard-document-list" class="w-5 h-5 text-lask-1" />
-                        </div>
+                        <x-icon name="clipboard-document-list" class="w-6 h-6 text-lask-1" />
                         <div class="text-4xl font-bold text-lask-text-primary">{{ $stats['total'] }}</div>
                     </div>
                     <div class="text-lask-text-secondary">全タスク</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-lask-success-light flex items-center justify-center">
-                            <x-icon name="check-circle" class="w-5 h-5 text-lask-success" />
-                        </div>
+                        <x-icon name="check-circle" class="w-6 h-6 text-lask-success" />
                         <div class="text-4xl font-bold text-lask-text-primary">{{ $stats['completion_rate'] }}%</div>
                     </div>
                     <div class="text-lask-text-secondary">完了率</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-lask-accent-subtle flex items-center justify-center">
-                            <x-icon name="arrow-path" class="w-5 h-5 text-lask-1" />
-                        </div>
+                        <x-icon name="arrow-path" class="w-6 h-6 text-lask-1" />
                         <div class="text-4xl font-bold text-lask-text-primary">{{ $stats['in_progress'] }}</div>
                     </div>
                     <div class="text-lask-text-secondary">進行中</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-lask-warning-light flex items-center justify-center">
-                            <x-icon name="exclamation-triangle" class="w-5 h-5 text-lask-warning" />
-                        </div>
+                        <x-icon name="exclamation-triangle" class="w-6 h-6 text-lask-warning" />
                         <div class="text-4xl font-bold text-lask-error">{{ $stats['failure_rate'] }}%</div>
                     </div>
                     <div class="text-lask-text-secondary">失敗率</div>
