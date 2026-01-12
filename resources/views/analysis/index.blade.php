@@ -338,11 +338,14 @@
                                 if (data.success) {
                                     this.apiAdvice = data.data.advice;
                                     this.analysisStarted = true;
+                                    Alpine.store('notifications')?.showToast('分析が完了しました', 'success');
                                 } else {
                                     this.error = 'アドバイスの取得に失敗しました';
+                                    Alpine.store('notifications')?.showToast('アドバイスの取得に失敗しました', 'error');
                                 }
                             } catch (e) {
                                 this.error = 'APIエラーが発生しました';
+                                Alpine.store('notifications')?.showToast('APIエラーが発生しました', 'error');
                                 console.error(e);
                             } finally {
                                 this.analyzing = false;
