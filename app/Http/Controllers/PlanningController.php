@@ -253,8 +253,10 @@ class PlanningController extends Controller
                 $currentHour += $blockDuration / 60;
             }
 
-            // 休憩を挿入（30分のタスク後）
-            if ($currentHour - $startHour >= 2 && $currentHour < $endHour - 0.5) {
+            // 休憩を挿入（2時間以上作業後）
+            // ただし、昼休み（12:00〜13:00）の前後1時間は小休憩を挿入しない
+            $nearLunchBreak = ($currentHour >= 11 && $currentHour <= 14);
+            if ($currentHour - $startHour >= 2 && $currentHour < $endHour - 0.5 && !$nearLunchBreak) {
                 StudyPlan::create([
                     'user_id' => $userId,
                     'title' => '小休憩',
@@ -438,6 +440,32 @@ class PlanningController extends Controller
             'task' => $task
         ]);
     }
-}
 
-//追加ここまで
+    /**
+     * タスクのステータス更新 API
+     */
+    public function updateStatus(Request $request, StudyPlan $studyPlan): JsonResponse
+    {
+        // ユーザー認可チェック
+        if ($studyPlan->user_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => '権限がありません',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:planned,in_progress,completed,skipped'],
+        ]);
+
+        $studyPlan->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ステータスを更新しました',
+            'plan' => $studyPlan,
+        ]);
+    }
+}
