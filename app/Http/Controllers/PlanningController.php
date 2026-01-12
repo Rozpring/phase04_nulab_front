@@ -253,8 +253,10 @@ class PlanningController extends Controller
                 $currentHour += $blockDuration / 60;
             }
 
-            // 休憩を挿入（30分のタスク後）
-            if ($currentHour - $startHour >= 2 && $currentHour < $endHour - 0.5) {
+            // 休憩を挿入（2時間以上作業後）
+            // ただし、昼休み（12:00〜13:00）の前後1時間は小休憩を挿入しない
+            $nearLunchBreak = ($currentHour >= 11 && $currentHour <= 14);
+            if ($currentHour - $startHour >= 2 && $currentHour < $endHour - 0.5 && !$nearLunchBreak) {
                 StudyPlan::create([
                     'user_id' => $userId,
                     'title' => '小休憩',
