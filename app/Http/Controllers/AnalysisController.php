@@ -82,24 +82,77 @@ class AnalysisController extends Controller
             ->where('scheduled_date', '>=', $startDate)
             ->get();
         
+        // Backlogインポート課題を取得
+        $issues = ImportedIssue::where('user_id', $userId)->get();
+        
         $totalPlans = $plans->count();
         $completedPlans = $plans->where('status', 'completed')->count();
         $skippedPlans = $plans->where('status', 'skipped')->count();
         $plannedPlans = $plans->where('status', 'planned')->count();
         
+        // Backlog課題の分析
+        $totalIssues = $issues->count();
+        $overdueIssues = $issues->filter(fn($i) => $i->is_overdue)->count();
+        $highPriorityIssues = $issues->where('priority', '高')->count();
+        $unhandledIssues = $issues->where('status', '未対応')->count();
+        $dueSoonIssues = $issues->filter(fn($i) => $i->days_until_due !== null && $i->days_until_due >= 0 && $i->days_until_due <= 3)->count();
+        
         $advice = [];
         
-        // 未着手タスクがある場合
-        if ($plannedPlans > 0) {
+        // 【Backlog分析】締め切り超過課題がある場合（最優先）
+        if ($overdueIssues > 0) {
             $advice[] = [
-                'title' => '未着手タスクへの着手',
-                'description' => "登録された{$plannedPlans}件のタスクが未着手状態です。まずは1件だけでも着手し、タスクの状態を更新する習慣をつけましょう。",
+                'title' => '締め切り超過の課題があります',
+                'description' => "{$overdueIssues}件の課題が締め切りを過ぎています。優先的に対応するか、期限を再設定しましょう。",
                 'tag' => '緊急',
                 'type' => 'warning',
             ];
         }
         
-        // 完了タスクがない場合
+        // 【Backlog分析】締め切りが近い課題
+        if ($dueSoonIssues > 0) {
+            $advice[] = [
+                'title' => '締め切りが近い課題',
+                'description' => "{$dueSoonIssues}件の課題が3日以内に締め切りを迎えます。計画に組み込んで対応しましょう。",
+                'tag' => '緊急',
+                'type' => 'warning',
+            ];
+        }
+        
+        // 【Backlog分析】高優先度の未対応課題
+        if ($highPriorityIssues > 0 && $unhandledIssues > 0) {
+            $highUnhandled = $issues->where('priority', '高')->where('status', '未対応')->count();
+            if ($highUnhandled > 0) {
+                $advice[] = [
+                    'title' => '高優先度の課題が未対応',
+                    'description' => "優先度「高」の課題が{$highUnhandled}件未対応です。今日の計画に最優先で追加しましょう。",
+                    'tag' => '緊急',
+                    'type' => 'warning',
+                ];
+            }
+        }
+        
+        // 【Backlog分析】未対応の課題がある場合（高優先度以外も含む）
+        if ($unhandledIssues > 0) {
+            $advice[] = [
+                'title' => '未対応のBacklog課題',
+                'description' => "{$unhandledIssues}件のBacklog課題が未対応です。優先度を確認して計画に組み込みましょう。",
+                'tag' => '推奨',
+                'type' => 'recommend',
+            ];
+        }
+        
+        // 【計画分析】未着手タスクがある場合
+        if ($plannedPlans > 0) {
+            $advice[] = [
+                'title' => '未着手タスクへの着手',
+                'description' => "登録された{$plannedPlans}件のタスクが未着手状態です。まずは1件だけでも着手し、タスクの状態を更新する習慣をつけましょう。",
+                'tag' => '推奨',
+                'type' => 'recommend',
+            ];
+        }
+        
+        // 【計画分析】完了タスクがない場合
         if ($completedPlans === 0 && $totalPlans > 0) {
             $advice[] = [
                 'title' => 'タスクの細分化と完了体験',
@@ -109,7 +162,7 @@ class AnalysisController extends Controller
             ];
         }
         
-        // スキップ率が高い場合
+        // 【計画分析】スキップ率が高い場合
         if ($totalPlans > 0 && ($skippedPlans / $totalPlans) > 0.2) {
             $skipRate = round(($skippedPlans / $totalPlans) * 100);
             $advice[] = [
@@ -120,17 +173,27 @@ class AnalysisController extends Controller
             ];
         }
         
-        // データが少ない場合
-        if ($totalPlans === 0) {
+        // 【Backlog分析】課題がインポートされていない場合
+        if ($totalIssues === 0) {
             $advice[] = [
-                'title' => '日々の作業記録の徹底',
-                'description' => '日別の作業記録がありません。タスクに着手したら、必ず実績時間や進捗状況を記録する習慣をつけましょう。',
+                'title' => 'Backlogから課題をインポート',
+                'description' => 'Backlogの課題をインポートすると、締め切りや優先度に基づいたより正確なアドバイスを提供できます。',
                 'tag' => '推奨',
                 'type' => 'recommend',
             ];
         }
         
-        // 良いパフォーマンスの場合
+        // 【計画分析】データが少ない場合
+        if ($totalPlans === 0 && $totalIssues > 0) {
+            $advice[] = [
+                'title' => 'AI計画生成を活用',
+                'description' => "インポートされた{$totalIssues}件の課題から、AI計画生成で効率的なスケジュールを作成しましょう。",
+                'tag' => '推奨',
+                'type' => 'recommend',
+            ];
+        }
+        
+        // 【良い結果】完了率が高い場合
         if ($totalPlans > 0 && $completedPlans > 0) {
             $completionRate = round(($completedPlans / $totalPlans) * 100);
             if ($completionRate >= 70) {
@@ -151,12 +214,18 @@ class AnalysisController extends Controller
                 'tag' => '参考',
                 'type' => 'info',
             ],
+            [
+                'title' => '定期的な振り返り',
+                'description' => '週に一度、完了したタスクと未完了のタスクを振り返り、次週の計画に活かしましょう。',
+                'tag' => '参考',
+                'type' => 'info',
+            ],
         ];
         
         while (count($advice) < 3) {
             $advice[] = array_shift($defaultAdvice) ?? [
-                'title' => '定期的な振り返り',
-                'description' => '週に一度、完了したタスクと未完了のタスクを振り返り、次週の計画に活かしましょう。',
+                'title' => '計画的なタスク管理',
+                'description' => '毎朝10分、今日の優先タスクを確認する習慣をつけましょう。',
                 'tag' => '参考',
                 'type' => 'info',
             ];
