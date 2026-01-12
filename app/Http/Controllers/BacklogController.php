@@ -213,7 +213,7 @@ class BacklogController extends Controller
                     'actual_hours' => $issue['actualHours'] ?? null,
                     'milestone' => $issue['milestone'][0]['name'] ?? null,
                     'assignee_name' => $issue['assignee']['name'] ?? null,
-                    'backlog_url' => "https://example.backlog.com/view/{$issue['issueKey']}",
+                    'backlog_url' => rtrim($setting->space_url ?? '', '/') . "/view/{$issue['issueKey']}",
                 ]
             );
             $imported++;

@@ -85,14 +85,8 @@
                                         <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                        </svg>
                                     </button>
                                 </div>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    <a href="https://support-ja.backlog.com/hc/ja/articles/360035641754" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                        APIキーの取得方法 →
-                                    </a>
-                                </p>
                                 <x-input-error :messages="$errors->get('api_key')" class="mt-2" />
                             </div>
 
@@ -143,8 +137,16 @@
                                                 body: JSON.stringify({ space_url: document.getElementById('space_url').value, api_key: document.getElementById('api_key').value })
                                             })
                                             .then(r => r.json())
-                                            .then(d => { result = d.success ? 'success' : 'error'; testing = false; })
-                                            .catch(() => { result = 'error'; testing = false; })"
+                                            .then(d => { 
+                                                result = d.success ? 'success' : 'error'; 
+                                                testing = false;
+                                                Alpine.store('notifications')?.showToast(d.success ? '接続に成功しました' : '接続に失敗しました。設定を確認してください', d.success ? 'success' : 'error');
+                                            })
+                                            .catch(() => { 
+                                                result = 'error'; 
+                                                testing = false;
+                                                Alpine.store('notifications')?.showToast('接続テスト中にエラーが発生しました', 'error');
+                                            })"
                                         class="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
                                         :disabled="testing"
                                     >
@@ -175,7 +177,7 @@
                                 <div class="text-center">
                                     <a href="{{ route('backlog.issues') }}" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm">
                                         <x-icon name="arrow-right" class="w-4 h-4" />
-                                        課題をインポートに進む
+                                        タスク追加に進む
                                     </a>
                                 </div>
                             </div>
@@ -205,7 +207,7 @@
                             </li>
                             <li class="flex items-start gap-3">
                                 <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold">4</span>
-                                <span>「課題をインポート」から学習計画に追加したい課題を選択します</span>
+                                <span>「タスク追加」から計画に追加したいタスクを選択します</span>
                             </li>
                         </ol>
 

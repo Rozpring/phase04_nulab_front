@@ -163,14 +163,53 @@ export function initStores(Alpine) {
                 .sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
         },
 
-        updateStatus(id, newStatus) {
+        async updateStatus(id, newStatus) {
             const index = this.items.findIndex(p => p.id === id);
-            if (index !== -1) {
-                // 新しい配列を作成してリアクティビティをトリガー
+            if (index === -1) return;
+
+            // 楽観的更新：まずUIを更新
+            const oldStatus = this.items[index].status;
+            this.items = this.items.map((p, i) =>
+                i === index ? { ...p, status: newStatus } : p
+            );
+            this.save();
+
+            // IDが整数（DBに保存済み）の場合のみAPIを呼び出し
+            // クライアント生成のID（文字列含む）はAPIを呼ばない
+            if (typeof id !== 'number' || !Number.isInteger(id)) {
+                console.log('Skipping API call for client-side ID:', id);
+                return;
+            }
+
+            // APIを呼び出し
+            try {
+                const response = await fetch(`/api/planning/tasks/${id}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Update failed');
+                }
+            } catch (error) {
+                console.error('Failed to update status:', error);
+                // エラー時はロールバック
                 this.items = this.items.map((p, i) =>
-                    i === index ? { ...p, status: newStatus } : p
+                    i === index ? { ...p, status: oldStatus } : p
                 );
                 this.save();
+                // 通知を表示
+                Alpine.store('notifications')?.showToast('ステータスの更新に失敗しました', 'error');
             }
         },
 
