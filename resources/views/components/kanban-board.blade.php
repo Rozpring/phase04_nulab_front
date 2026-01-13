@@ -6,6 +6,7 @@
 
 <div 
     x-data="kanbanBoard()"
+    x-init="$store.plans.init()"
     {{ $attributes->merge(['class' => 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6']) }}
 >
     {{-- 予定カラム --}}

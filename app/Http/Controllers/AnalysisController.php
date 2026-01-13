@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ImportedIssue;
 use App\Models\StudyPlan;
 use App\Services\AnalysisService;
+use App\Services\BackendApiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +15,10 @@ use Illuminate\View\View;
 class AnalysisController extends Controller
 {
     public function __construct(
-        private readonly AnalysisService $analysisService
+        private readonly AnalysisService $analysisService,
+        private readonly BackendApiService $backendApi
     ) {}
+
 
     /**
      * AI分析ダッシュボード
@@ -47,6 +50,7 @@ class AnalysisController extends Controller
 
     /**
      * AI分析アドバイスAPI
+     * バックエンドAPIを優先し、失敗時はローカルサービスにフォールバック
      */
     public function apiAdvice(Request $request): JsonResponse
     {
@@ -63,7 +67,33 @@ class AnalysisController extends Controller
         $cached = Cache::has($cacheKey);
         
         $advice = Cache::remember($cacheKey, now()->addHours(1), function () use ($userId, $targetDate) {
-            return $this->analysisService->generateApiAdvice($userId, $targetDate);
+            // 統計データを準備
+            $issues = ImportedIssue::where('user_id', $userId)->get();
+            $plans = StudyPlan::where('user_id', $userId)->get();
+            $stats = $this->analysisService->calculateStats($issues, $plans);
+            
+            // バックエンドAPIを試行
+            $backendResponse = $this->backendApi->generateAdvice($stats);
+            
+            if ($backendResponse && isset($backendResponse['data']['advice'])) {
+                return [
+                    'advice' => $backendResponse['data']['advice'],
+                    'source' => 'backend_api',
+                ];
+            }
+            
+            // フォールバック: ローカルサービスで生成
+            if ($this->backendApi->isFallbackEnabled()) {
+                return [
+                    'advice' => $this->analysisService->generateApiAdvice($userId, $targetDate),
+                    'source' => 'local_fallback',
+                ];
+            }
+            
+            return [
+                'advice' => [],
+                'source' => 'none',
+            ];
         });
         
         return response()->json([
@@ -71,8 +101,10 @@ class AnalysisController extends Controller
             'cached' => $cached && !request()->boolean('refresh'),
             'data' => [
                 'target_date' => $targetDate,
-                'advice' => $advice,
+                'advice' => $advice['advice'] ?? $advice,
+                'source' => $advice['source'] ?? 'unknown',
             ],
         ]);
     }
 }
+

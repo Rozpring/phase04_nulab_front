@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ImportedIssue;
 use App\Models\StudyPlan;
 use App\Models\Task;
+use App\Services\BackendApiService;
 use App\Services\PlanGenerationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -16,8 +17,10 @@ use Illuminate\View\View;
 class PlanningController extends Controller
 {
     public function __construct(
-        private readonly PlanGenerationService $planService
+        private readonly PlanGenerationService $planService,
+        private readonly BackendApiService $backendApi
     ) {}
+
 
     /**
      * 計画ダッシュボード
@@ -104,6 +107,7 @@ class PlanningController extends Controller
 
     /**
      * AI計画生成（API）
+     * バックエンドAPIを優先し、失敗時はローカルサービスにフォールバック
      */
     public function apiGenerate(Request $request): JsonResponse
     {
@@ -120,21 +124,221 @@ class PlanningController extends Controller
             ], 400);
         }
 
-        $this->planService->clearPendingPlans($userId);
-        $this->planService->generatePlans($userId, $issues);
+        // バックエンドAPIを試行
+        $backendResponse = $this->backendApi->generatePlanning();
+        
+        if ($backendResponse && isset($backendResponse['success']) && $backendResponse['success']) {
+            // バックエンドAPIから計画を取得成功
+            // バックエンドの計画をフロントエンドのStudyPlanに同期
+            $this->syncBackendPlansToLocal($userId, $backendResponse['plans'] ?? []);
+            
+            return response()->json([
+                'success' => true,
+                'message' => $backendResponse['message'] ?? '計画を生成しました',
+                'plans' => $this->planService->getFormattedPlans($userId),
+                'target_date' => $backendResponse['target_date'] ?? today()->format('Y-m-d'),
+                'source' => 'backend_api',
+            ]);
+        }
 
-        $formattedPlans = $this->planService->getFormattedPlans($userId);
+        // フォールバック: ローカルサービスで生成
+        if ($this->backendApi->isFallbackEnabled()) {
+            $this->planService->clearPendingPlans($userId);
+            $this->planService->generatePlans($userId, $issues);
+
+            $formattedPlans = $this->planService->getFormattedPlans($userId);
+
+            return response()->json([
+                'success' => true,
+                'message' => count($formattedPlans) . '件の計画を生成しました（ローカル）',
+                'plans' => $formattedPlans,
+                'target_date' => today()->format('Y-m-d'),
+                'source' => 'local_fallback',
+            ]);
+        }
 
         return response()->json([
-            'success' => true,
-            'message' => count($formattedPlans) . '件の計画を生成しました',
-            'plans' => $formattedPlans,
+            'success' => false,
+            'message' => 'バックエンドAPIへの接続に失敗しました',
+            'plans' => [],
             'target_date' => today()->format('Y-m-d'),
-        ]);
+        ], 503);
+    }
+
+    /**
+     * バックエンドAPIからの計画をローカルDBに同期
+     */
+    private function syncBackendPlansToLocal(int $userId, array $plans): void
+    {
+        // 既存の予定計画をクリア
+        $this->planService->clearPendingPlans($userId);
+        
+        foreach ($plans as $plan) {
+            StudyPlan::create([
+                'user_id' => $userId,
+                'imported_issue_id' => null, // バックエンドのraw_issue_idとマッピングが必要な場合は別途実装
+                'title' => $plan['title'] ?? '',
+                'plan_type' => 'work',
+                'scheduled_date' => $plan['target_date'] ?? today(),
+                'scheduled_time' => Carbon::createFromTime(9, 0),
+                'end_time' => Carbon::createFromTime(9, 0)->addMinutes($plan['planned_minutes'] ?? 60),
+                'duration_minutes' => $plan['planned_minutes'] ?? 60,
+                'priority' => $this->mapPriorityToNumber($plan['priority'] ?? '中'),
+                'ai_reason' => $plan['ai_comment'] ?? null,
+                'status' => 'planned',
+            ]);
+        }
+    }
+
+    /**
+     * 優先度文字列を数値に変換
+     */
+    private function mapPriorityToNumber(string $priority): int
+    {
+        return match($priority) {
+            '高' => 9,
+            '中' => 5,
+            '低' => 3,
+            default => 5,
+        };
+    }
+
+
+    /**
+     * 未消化課題リスト取得（API）
+     * バックエンドAPIを優先し、失敗時はローカルデータにフォールバック
+     */
+    public function apiUnscheduled(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        
+        // バックエンドAPIを試行
+        $backendResponse = $this->backendApi->getUnscheduledIssues();
+        
+        if ($backendResponse !== null) {
+            // バックエンドAPIから取得成功
+            return response()->json([
+                'success' => true,
+                'data' => $backendResponse,
+                'source' => 'backend_api',
+            ]);
+        }
+        
+        // フォールバック: ローカルのImportedIssueから取得
+        if ($this->backendApi->isFallbackEnabled()) {
+            $scheduledIssueIds = StudyPlan::where('user_id', $userId)
+                ->where('scheduled_date', '>=', today())
+                ->whereNotNull('imported_issue_id')
+                ->pluck('imported_issue_id')
+                ->toArray();
+            
+            $unscheduledIssues = ImportedIssue::where('user_id', $userId)
+                ->whereNotIn('status', ['完了', '処理済み'])
+                ->whereNotIn('id', $scheduledIssueIds)
+                ->orderBy('due_date')
+                ->get()
+                ->map(function ($issue) {
+                    return [
+                        'id' => $issue->id,
+                        'issue_key' => $issue->issue_key,
+                        'summary' => $issue->summary,
+                        'data' => [
+                            'priority' => ['name' => $issue->priority],
+                            'dueDate' => $issue->due_date?->format('Y-m-d'),
+                            'estimatedHours' => $issue->estimated_hours,
+                        ],
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $unscheduledIssues,
+                'source' => 'local_fallback',
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'バックエンドAPIへの接続に失敗しました',
+            'data' => [],
+        ], 503);
+    }
+
+    /**
+     * 今日のタスクボード取得（API）
+     * バックエンドAPIを優先し、失敗時はローカルデータにフォールバック
+     */
+    public function apiDaily(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        $date = $request->input('date', today()->format('Y-m-d'));
+        
+        // バックエンドAPIを試行
+        $backendResponse = $this->backendApi->getDailyPlanning($date);
+        
+        if ($backendResponse !== null) {
+            // バックエンドAPIから取得成功
+            return response()->json([
+                'success' => true,
+                'data' => $backendResponse,
+                'source' => 'backend_api',
+            ]);
+        }
+        
+        // フォールバック: ローカルのStudyPlanから取得
+        if ($this->backendApi->isFallbackEnabled()) {
+            $plans = StudyPlan::with('importedIssue')
+                ->where('user_id', $userId)
+                ->whereDate('scheduled_date', $date)
+                ->orderBy('scheduled_time')
+                ->get();
+            
+            $lanes = [
+                'planned' => [],
+                'in_progress' => [],
+                'completed' => [],
+                'skipped' => [],
+            ];
+            
+            foreach ($plans as $plan) {
+                $laneStatus = $plan->status;
+                if (!isset($lanes[$laneStatus])) {
+                    $laneStatus = 'planned';
+                }
+                
+                $lanes[$laneStatus][] = [
+                    'id' => $plan->id,
+                    'issue_key' => $plan->importedIssue?->issue_key,
+                    'summary' => $plan->title,
+                    'lane_status' => $plan->status,
+                    'target_date' => $plan->scheduled_date->format('Y-m-d'),
+                    'end_date' => $plan->scheduled_date->format('Y-m-d'),
+                    'duration_minutes' => $plan->duration_minutes,
+                    'ai_comment' => $plan->ai_reason,
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'date' => $date,
+                    'lanes' => $lanes,
+                ],
+                'source' => 'local_fallback',
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'バックエンドAPIへの接続に失敗しました',
+            'data' => [],
+        ], 503);
     }
 
     /**
      * タイムライン表示
+
+
      */
     public function timeline(Request $request): View
     {
