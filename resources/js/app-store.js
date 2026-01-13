@@ -148,9 +148,69 @@ function saveToStorage(key, value) {
 export function initStores(Alpine) {
     // -------------------
     // Plans Store (計画管理)
+    // サーバーのStudyPlanテーブルからデータを取得
     // -------------------
     Alpine.store('plans', {
-        items: loadFromStorage('lask_plans', MOCK_PLANS),
+        items: [],
+        loading: false,
+        initialized: false,
+
+        async init() {
+            if (this.initialized) return;
+            this.initialized = true;
+            await this.fetchFromServer();
+        },
+
+        async fetchFromServer() {
+            this.loading = true;
+            try {
+                const response = await fetch('/api/planning/daily', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const data = await response.json();
+                if (data.success && data.data?.lanes) {
+                    // レーンデータをフラット配列に変換
+                    const lanes = data.data.lanes;
+                    const plans = [];
+
+                    Object.entries(lanes).forEach(([status, items]) => {
+                        items.forEach(item => {
+                            plans.push({
+                                id: item.id,
+                                title: item.summary,
+                                plan_type: 'work', // デフォルト
+                                scheduled_date: item.target_date,
+                                scheduled_time: '09:00', // TODO: APIから取得
+                                end_time: '10:00',
+                                duration_minutes: item.duration_minutes || 60,
+                                status: item.lane_status || status,
+                                ai_reason: item.ai_comment,
+                                issue_key: item.issue_key
+                            });
+                        });
+                    });
+
+                    this.items = plans;
+                    console.log('Plans loaded from server:', plans.length);
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                console.warn('Failed to fetch plans from server, using localStorage fallback:', error);
+                // フォールバック: localStorageから読み込み
+                this.items = loadFromStorage('lask_plans', MOCK_PLANS);
+            } finally {
+                this.loading = false;
+            }
+        },
 
         getByStatus(status) {
             return this.items.filter(p => p.status === status);
@@ -160,7 +220,7 @@ export function initStores(Alpine) {
             const today = new Date().toISOString().split('T')[0];
             return this.items
                 .filter(p => p.scheduled_date === today)
-                .sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
+                .sort((a, b) => (a.scheduled_time || '').localeCompare(b.scheduled_time || ''));
         },
 
         async updateStatus(id, newStatus) {
@@ -172,10 +232,8 @@ export function initStores(Alpine) {
             this.items = this.items.map((p, i) =>
                 i === index ? { ...p, status: newStatus } : p
             );
-            this.save();
 
             // IDが整数（DBに保存済み）の場合のみAPIを呼び出し
-            // クライアント生成のID（文字列含む）はAPIを呼ばない
             if (typeof id !== 'number' || !Number.isInteger(id)) {
                 console.log('Skipping API call for client-side ID:', id);
                 return;
@@ -207,7 +265,6 @@ export function initStores(Alpine) {
                 this.items = this.items.map((p, i) =>
                     i === index ? { ...p, status: oldStatus } : p
                 );
-                this.save();
                 // 通知を表示
                 Alpine.store('notifications')?.showToast('ステータスの更新に失敗しました', 'error');
             }
@@ -217,7 +274,6 @@ export function initStores(Alpine) {
             const index = this.items.findIndex(p => p.id === id);
             if (index !== -1) {
                 this.items[index] = { ...this.items[index], ...data };
-                this.save();
             }
         },
 
@@ -228,22 +284,15 @@ export function initStores(Alpine) {
                 ...plan
             };
             this.items.push(newPlan);
-            this.save();
             return newPlan;
         },
 
         remove(id) {
             this.items = this.items.filter(p => p.id !== id);
-            this.save();
         },
 
-        save() {
-            saveToStorage('lask_plans', this.items);
-        },
-
-        reset() {
-            this.items = [...MOCK_PLANS];
-            this.save();
+        async refresh() {
+            await this.fetchFromServer();
         }
     });
 
