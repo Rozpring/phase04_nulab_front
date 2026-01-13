@@ -265,7 +265,79 @@ class PlanningController extends Controller
     }
 
     /**
+     * 今日のタスクボード取得（API）
+     * バックエンドAPIを優先し、失敗時はローカルデータにフォールバック
+     */
+    public function apiDaily(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        $date = $request->input('date', today()->format('Y-m-d'));
+        
+        // バックエンドAPIを試行
+        $backendResponse = $this->backendApi->getDailyPlanning($date);
+        
+        if ($backendResponse !== null) {
+            // バックエンドAPIから取得成功
+            return response()->json([
+                'success' => true,
+                'data' => $backendResponse,
+                'source' => 'backend_api',
+            ]);
+        }
+        
+        // フォールバック: ローカルのStudyPlanから取得
+        if ($this->backendApi->isFallbackEnabled()) {
+            $plans = StudyPlan::with('importedIssue')
+                ->where('user_id', $userId)
+                ->whereDate('scheduled_date', $date)
+                ->orderBy('scheduled_time')
+                ->get();
+            
+            $lanes = [
+                'planned' => [],
+                'in_progress' => [],
+                'completed' => [],
+                'skipped' => [],
+            ];
+            
+            foreach ($plans as $plan) {
+                $laneStatus = $plan->status;
+                if (!isset($lanes[$laneStatus])) {
+                    $laneStatus = 'planned';
+                }
+                
+                $lanes[$laneStatus][] = [
+                    'id' => $plan->id,
+                    'issue_key' => $plan->importedIssue?->issue_key,
+                    'summary' => $plan->title,
+                    'lane_status' => $plan->status,
+                    'target_date' => $plan->scheduled_date->format('Y-m-d'),
+                    'end_date' => $plan->scheduled_date->format('Y-m-d'),
+                    'duration_minutes' => $plan->duration_minutes,
+                    'ai_comment' => $plan->ai_reason,
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'date' => $date,
+                    'lanes' => $lanes,
+                ],
+                'source' => 'local_fallback',
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'バックエンドAPIへの接続に失敗しました',
+            'data' => [],
+        ], 503);
+    }
+
+    /**
      * タイムライン表示
+
 
      */
     public function timeline(Request $request): View

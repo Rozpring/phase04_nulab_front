@@ -13,7 +13,9 @@ Route::get('/user', function (Request $request) {
 Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/planning/generate', [PlanningController::class, 'apiGenerate']);
     Route::get('/planning/unscheduled', [PlanningController::class, 'apiUnscheduled']);
+    Route::get('/planning/daily', [PlanningController::class, 'apiDaily']);
     Route::patch('/planning/tasks/{studyPlan}/status', [PlanningController::class, 'updateStatus']);
     Route::post('/analysis/advice', [AnalysisController::class, 'apiAdvice']);
 });
+
 

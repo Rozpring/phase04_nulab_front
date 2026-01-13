@@ -158,5 +158,48 @@ class BackendApiService
             return null;
         }
     }
+
+    /**
+     * 今日のタスクボード取得（カンバン用）
+     * 
+     * カンバンボードの初期表示に使用。「予定」「進行中」「完了」「スキップ」
+     * などのレーンごとに整理されたJSONを返す。
+     * 
+     * @param string|null $date 日付 (Y-m-d形式、nullの場合は今日)
+     * @return array|null 成功時はレーン別データ、失敗時はnull
+     */
+    public function getDailyPlanning(?string $date = null): ?array
+    {
+        try {
+            $params = [];
+            if ($date) {
+                $params['date'] = $date;
+            }
+            
+            $response = Http::timeout($this->timeout)
+                ->retry($this->retryTimes, $this->retrySleep)
+                ->get("{$this->baseUrl}/api/planning/daily", $params);
+
+            if ($response->successful()) {
+                Log::info('Backend API: Daily planning fetched successfully');
+                return $response->json();
+            }
+
+            Log::warning('Backend API: Daily planning fetch failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (Exception $e) {
+            Log::error('Backend API: Daily planning error', [
+                'error' => $e->getMessage(),
+                'url' => "{$this->baseUrl}/api/planning/daily",
+            ]);
+
+            return null;
+        }
+    }
 }
 
