@@ -32,14 +32,17 @@ class BackendApiService
     /**
      * AI計画生成をバックエンドAPIに依頼
      * 
+     * @param array $issues 課題データの配列（フロントエンドのImportedIssueから整形）
      * @return array|null 成功時はレスポンスデータ、失敗時はnull
      */
-    public function generatePlanning(): ?array
+    public function generatePlanning(array $issues = []): ?array
     {
         try {
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryTimes, $this->retrySleep)
-                ->post("{$this->baseUrl}/api/planning/generate");
+                ->post("{$this->baseUrl}/api/planning/generate", [
+                    'issues' => $issues,
+                ]);
 
             if ($response->successful()) {
                 Log::info('Backend API: Planning generation successful');

@@ -124,8 +124,17 @@ class PlanningController extends Controller
             ], 400);
         }
 
-        // バックエンドAPIを試行
-        $backendResponse = $this->backendApi->generatePlanning();
+        // バックエンドAPIを試行（課題データを整形して送信）
+        $issueData = $issues->map(fn($issue) => [
+            'title' => $issue->summary,
+            'description' => $issue->description,
+            'priority' => $issue->priority,
+            'dueDate' => $issue->due_date?->format('Y-m-d'),
+            'estimatedHours' => $issue->estimated_hours,
+            'issue_key' => $issue->issue_key,
+        ])->toArray();
+
+        $backendResponse = $this->backendApi->generatePlanning($issueData);
         
         if ($backendResponse && isset($backendResponse['success']) && $backendResponse['success']) {
             // バックエンドAPIから計画を取得成功

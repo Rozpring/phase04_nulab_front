@@ -76,8 +76,8 @@ describe('PlanGenerationService', function () {
     
     describe('clearPendingPlans', function () {
         
-        it('deletes only planned status plans from today onwards', function () {
-            // 今日以降の予定計画（削除されるべき）
+        it('deletes all plans from today onwards to prevent duplicates', function () {
+            // 今日以降の計画（全て削除されるべき）
             StudyPlan::factory()->create([
                 'user_id' => $this->user->id,
                 'scheduled_date' => today(),
@@ -89,7 +89,7 @@ describe('PlanGenerationService', function () {
                 'status' => 'planned',
             ]);
             
-            // 完了済み計画（削除されないべき）
+            // 今日の完了済み計画（再生成時に削除されるべき）
             StudyPlan::factory()->create([
                 'user_id' => $this->user->id,
                 'scheduled_date' => today(),
@@ -105,7 +105,8 @@ describe('PlanGenerationService', function () {
             
             $this->service->clearPendingPlans($this->user->id);
             
-            expect(StudyPlan::where('user_id', $this->user->id)->count())->toBe(2);
+            // 過去の計画のみ残る
+            expect(StudyPlan::where('user_id', $this->user->id)->count())->toBe(1);
         });
         
     });

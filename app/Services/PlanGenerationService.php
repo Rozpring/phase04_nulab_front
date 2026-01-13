@@ -31,13 +31,13 @@ class PlanGenerationService
     }
 
     /**
-     * 既存の未実行計画をクリア
+     * 既存の計画をクリア（再生成時に重複を防ぐ）
+     * 今日以降の全ステータスの計画を削除（完了済みも含む）
      */
     public function clearPendingPlans(int $userId): void
     {
         StudyPlan::where('user_id', $userId)
             ->where('scheduled_date', '>=', today())
-            ->where('status', 'planned')
             ->delete();
     }
 
