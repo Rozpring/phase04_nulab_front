@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ImportedIssue;
 use App\Models\StudyPlan;
 use App\Models\Task;
+use App\Services\BackendApiService;
 use App\Services\PlanGenerationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -16,8 +17,10 @@ use Illuminate\View\View;
 class PlanningController extends Controller
 {
     public function __construct(
-        private readonly PlanGenerationService $planService
+        private readonly PlanGenerationService $planService,
+        private readonly BackendApiService $backendApi
     ) {}
+
 
     /**
      * 計画ダッシュボード
@@ -104,6 +107,7 @@ class PlanningController extends Controller
 
     /**
      * AI計画生成（API）
+     * バックエンドAPIを優先し、失敗時はローカルサービスにフォールバック
      */
     public function apiGenerate(Request $request): JsonResponse
     {
@@ -120,18 +124,85 @@ class PlanningController extends Controller
             ], 400);
         }
 
-        $this->planService->clearPendingPlans($userId);
-        $this->planService->generatePlans($userId, $issues);
+        // バックエンドAPIを試行
+        $backendResponse = $this->backendApi->generatePlanning();
+        
+        if ($backendResponse && isset($backendResponse['success']) && $backendResponse['success']) {
+            // バックエンドAPIから計画を取得成功
+            // バックエンドの計画をフロントエンドのStudyPlanに同期
+            $this->syncBackendPlansToLocal($userId, $backendResponse['plans'] ?? []);
+            
+            return response()->json([
+                'success' => true,
+                'message' => $backendResponse['message'] ?? '計画を生成しました',
+                'plans' => $this->planService->getFormattedPlans($userId),
+                'target_date' => $backendResponse['target_date'] ?? today()->format('Y-m-d'),
+                'source' => 'backend_api',
+            ]);
+        }
 
-        $formattedPlans = $this->planService->getFormattedPlans($userId);
+        // フォールバック: ローカルサービスで生成
+        if ($this->backendApi->isFallbackEnabled()) {
+            $this->planService->clearPendingPlans($userId);
+            $this->planService->generatePlans($userId, $issues);
+
+            $formattedPlans = $this->planService->getFormattedPlans($userId);
+
+            return response()->json([
+                'success' => true,
+                'message' => count($formattedPlans) . '件の計画を生成しました（ローカル）',
+                'plans' => $formattedPlans,
+                'target_date' => today()->format('Y-m-d'),
+                'source' => 'local_fallback',
+            ]);
+        }
 
         return response()->json([
-            'success' => true,
-            'message' => count($formattedPlans) . '件の計画を生成しました',
-            'plans' => $formattedPlans,
+            'success' => false,
+            'message' => 'バックエンドAPIへの接続に失敗しました',
+            'plans' => [],
             'target_date' => today()->format('Y-m-d'),
-        ]);
+        ], 503);
     }
+
+    /**
+     * バックエンドAPIからの計画をローカルDBに同期
+     */
+    private function syncBackendPlansToLocal(int $userId, array $plans): void
+    {
+        // 既存の予定計画をクリア
+        $this->planService->clearPendingPlans($userId);
+        
+        foreach ($plans as $plan) {
+            StudyPlan::create([
+                'user_id' => $userId,
+                'imported_issue_id' => null, // バックエンドのraw_issue_idとマッピングが必要な場合は別途実装
+                'title' => $plan['title'] ?? '',
+                'plan_type' => 'work',
+                'scheduled_date' => $plan['target_date'] ?? today(),
+                'scheduled_time' => Carbon::createFromTime(9, 0),
+                'end_time' => Carbon::createFromTime(9, 0)->addMinutes($plan['planned_minutes'] ?? 60),
+                'duration_minutes' => $plan['planned_minutes'] ?? 60,
+                'priority' => $this->mapPriorityToNumber($plan['priority'] ?? '中'),
+                'ai_reason' => $plan['ai_comment'] ?? null,
+                'status' => 'planned',
+            ]);
+        }
+    }
+
+    /**
+     * 優先度文字列を数値に変換
+     */
+    private function mapPriorityToNumber(string $priority): int
+    {
+        return match($priority) {
+            '高' => 9,
+            '中' => 5,
+            '低' => 3,
+            default => 5,
+        };
+    }
+
 
     /**
      * タイムライン表示
