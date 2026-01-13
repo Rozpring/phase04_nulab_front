@@ -33,13 +33,15 @@ class PlanningController extends Controller
             ->get();
 
         // 今日の計画
-        $todayPlans = StudyPlan::where('user_id', $userId)
+        $todayPlans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
             ->whereDate('scheduled_date', today())
             ->orderBy('scheduled_time')
             ->get();
 
         // 今週の計画
-        $weekPlans = StudyPlan::where('user_id', $userId)
+        $weekPlans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
             ->whereBetween('scheduled_date', [today(), today()->addDays(6)])
             ->orderBy('scheduled_date')
             ->orderBy('scheduled_time')
@@ -139,7 +141,8 @@ class PlanningController extends Controller
         $userId = Auth::id();
         $date = $request->input('date') ? Carbon::parse($request->input('date')) : today();
 
-        $plans = StudyPlan::where('user_id', $userId)
+        $plans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
             ->whereDate('scheduled_date', $date)
             ->orderBy('scheduled_time')
             ->get();
@@ -173,7 +176,8 @@ class PlanningController extends Controller
         $endOfMonth = $startOfMonth->copy()->endOfMonth();
 
         // 月の計画を取得
-        $plans = StudyPlan::where('user_id', $userId)
+        $plans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
             ->whereBetween('scheduled_date', [$startOfMonth, $endOfMonth])
             ->orderBy('scheduled_time')
             ->get()

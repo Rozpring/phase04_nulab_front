@@ -25,7 +25,9 @@ class AnalysisController extends Controller
         $userId = Auth::id();
 
         $issues = ImportedIssue::where('user_id', $userId)->get();
-        $plans = StudyPlan::where('user_id', $userId)->get();
+        $plans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
+            ->get();
         
         $stats = $this->analysisService->calculateStats($issues, $plans);
         $patterns = $this->analysisService->detectPatterns($issues, $plans);

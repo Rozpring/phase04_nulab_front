@@ -17,7 +17,8 @@ class DashboardController extends Controller
         $userId = Auth::id();
 
         // 今日の計画を取得（円グラフとリストで共通使用）
-        $todayPlans = StudyPlan::where('user_id', $userId)
+        $todayPlans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
             ->whereDate('scheduled_date', today())
             ->orderBy('scheduled_time')
             ->get();
@@ -57,7 +58,8 @@ class DashboardController extends Controller
             ->get();
 
         // 最近の活動（3日以内の完了・スキップ）
-        $recentActivity = StudyPlan::where('user_id', $userId)
+        $recentActivity = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
             ->where('updated_at', '>=', now()->subDays(3))
             ->whereIn('status', ['completed', 'skipped'])
             ->orderByDesc('updated_at')

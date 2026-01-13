@@ -184,7 +184,8 @@ class AnalysisService
     public function generateApiAdvice(int $userId, string $targetDate): array
     {
         $startDate = now()->subDays(7);
-        $plans = StudyPlan::where('user_id', $userId)
+        $plans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
             ->where('scheduled_date', '>=', $startDate)
             ->get();
         
@@ -350,7 +351,8 @@ class AnalysisService
 
         for ($i = 0; $i < 7; $i++) {
             $date = $startOfWeek->copy()->addDays($i);
-            $dayPlans = StudyPlan::where('user_id', $userId)
+            $dayPlans = StudyPlan::with('importedIssue')
+                ->where('user_id', $userId)
                 ->whereDate('scheduled_date', $date)
                 ->get();
             
