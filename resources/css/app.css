@@ -64,6 +64,16 @@
     --color-5: #8b7355;
     /* ブラウン */
 
+    /* ===== プランタイプカラー ===== */
+    --color-plan-work: #6b8cae;
+    /* 作業: 落ち着いた青 */
+    --color-plan-break: #8fbc8f;
+    /* 休憩: 爽やかな緑 */
+    --color-plan-review: #2c3e50;
+    /* レビュー: ダークネイビー */
+    --color-plan-study: var(--color-accent);
+    /* 学習: アクセントカラー */
+
     /* ===== スペーシング ===== */
     --space-xs: 0.25rem;
     --space-sm: 0.5rem;

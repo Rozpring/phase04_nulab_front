@@ -48,7 +48,7 @@
         .resize-handle.right { right: 0; }
     </style>
 
-    <div class="min-h-screen bg-[#DCD6F7] dark:bg-gray-900 pb-20 font-sans">
+    <div class="min-h-screen bg-lask-bg-muted dark:bg-gray-900 pb-20 font-sans">
         
         {{-- ▼ 年・月切り替えヘッダーエリア（デザイン調整版） ▼ --}}
         <div class="max-w-[95%] mx-auto pt-8 pb-6 flex flex-col sm:flex-row items-center justify-between gap-6">

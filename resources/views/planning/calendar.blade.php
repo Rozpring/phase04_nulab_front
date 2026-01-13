@@ -89,9 +89,9 @@
                                         @php
                                             $colors = [
                                                 'study' => 'bg-lask-accent-subtle text-lask-text-primary',
-                                                'work' => 'bg-[#6b8cae]/40 text-lask-text-primary',
-                                                'break' => 'bg-[#8fbc8f]/50 text-lask-text-primary',
-                                                'review' => 'bg-[#2c3e50]/30 text-lask-text-primary',
+                                                'work' => 'bg-lask-plan-work/40 text-lask-text-primary',
+                                                'break' => 'bg-lask-plan-break/50 text-lask-text-primary',
+                                                'review' => 'bg-lask-plan-review/30 text-lask-text-primary',
                                             ];
                                             $dotColors = [
                                                 'study' => 'bg-lask-accent',
