@@ -43,6 +43,11 @@ export default {
                     'text-primary': 'var(--color-text-primary)',
                     'text-secondary': 'var(--color-text-secondary)',
                     'border': 'var(--color-border)',
+                    // プランタイプカラー
+                    'plan-work': 'var(--color-plan-work)',
+                    'plan-break': 'var(--color-plan-break)',
+                    'plan-review': 'var(--color-plan-review)',
+                    'plan-study': 'var(--color-plan-study)',
                 },
             },
         },

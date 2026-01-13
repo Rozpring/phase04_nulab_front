@@ -8,9 +8,9 @@
     // テーマ連動カラー - 補色パレット使用
     $typeColors = [
         'study' => 'border-lask-accent bg-lask-accent-subtle',
-        'work' => 'border-[#6b8cae] bg-[#6b8cae]/20',
-        'break' => 'border-[#8fbc8f] bg-[#8fbc8f]/30',
-        'review' => 'border-[#2c3e50] bg-[#2c3e50]/25',
+        'work' => 'border-lask-plan-work bg-lask-plan-work/20',
+        'break' => 'border-lask-plan-break bg-lask-plan-break/30',
+        'review' => 'border-lask-plan-review bg-lask-plan-review/25',
     ];
     $typeIcons = [
         'study' => 'book-open',

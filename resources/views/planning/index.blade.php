@@ -142,9 +142,9 @@
                                                     @php
                                                         $colors = [
                                                             'study' => 'bg-lask-accent-subtle',
-                                                            'work' => 'bg-[#6b8cae]',
-                                                            'break' => 'bg-[#8fbc8f]',
-                                                            'review' => 'bg-[#2c3e50]',
+                                                            'work' => 'bg-lask-plan-work',
+                                                            'break' => 'bg-lask-plan-break',
+                                                            'review' => 'bg-lask-plan-review',
                                                         ];
                                                         $durationMinutes = $plan->duration_minutes ?? 30;
                                                         $barHeight = max(8, min(32, round($durationMinutes / 4)));
@@ -195,11 +195,11 @@
                                     <span class="text-lask-text-secondary">学習</span>
                                 </div>
                                 <div class="flex items-center gap-1">
-                                    <div class="w-3 h-3 bg-[#6b8cae] rounded"></div>
+                                    <div class="w-3 h-3 bg-lask-plan-work rounded"></div>
                                     <span class="text-lask-text-secondary">作業</span>
                                 </div>
                                 <div class="flex items-center gap-1">
-                                    <div class="w-3 h-3 bg-[#8fbc8f] rounded"></div>
+                                    <div class="w-3 h-3 bg-lask-plan-break rounded"></div>
                                     <span class="text-lask-text-secondary">休憩</span>
                                 </div>
                             </div>
@@ -222,9 +222,9 @@
                         // 色設定
                         $ganttColors = [
                             'study' => 'bg-lask-accent text-white',
-                            'work' => 'bg-[#6b8cae] text-white',
-                            'break' => 'bg-[#8fbc8f] text-white',
-                            'review' => 'bg-[#2c3e50] text-gray-200',
+                            'work' => 'bg-lask-plan-work text-white',
+                            'break' => 'bg-lask-plan-break text-white',
+                            'review' => 'bg-lask-plan-review text-gray-200',
                             'default' => 'bg-gray-400 text-white', // デフォルト色
                         ];
                     @endphp

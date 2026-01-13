@@ -109,24 +109,24 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="flex gap-4 p-4 bg-[#6b8cae]/20 rounded-xl">
-                                            <x-icon name="cpu-chip" class="w-8 h-8 text-[#6b8cae] flex-shrink-0" />
+                                        <div class="flex gap-4 p-4 bg-lask-plan-work/20 rounded-xl">
+                                            <x-icon name="cpu-chip" class="w-8 h-8 text-lask-plan-work flex-shrink-0" />
                                             <div>
                                                 <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">2. AI計画生成</h4>
                                                 <p class="text-sm text-gray-600 dark:text-gray-400">「計画を生成」で最適なスケジュールを自動生成。</p>
                                             </div>
                                         </div>
                                         
-                                        <div class="flex gap-4 p-4 bg-[#2c3e50]/15 rounded-xl">
-                                            <x-icon name="clipboard-document-list" class="w-8 h-8 text-[#2c3e50] dark:text-gray-300 flex-shrink-0" />
+                                        <div class="flex gap-4 p-4 bg-lask-plan-review/15 rounded-xl">
+                                            <x-icon name="clipboard-document-list" class="w-8 h-8 text-lask-plan-review dark:text-gray-300 flex-shrink-0" />
                                             <div>
                                                 <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">3. 計画を管理</h4>
                                                 <p class="text-sm text-gray-600 dark:text-gray-400">開始・完了・スキップの操作が可能。</p>
                                             </div>
                                         </div>
                                         
-                                        <div class="flex gap-4 p-4 bg-[#8fbc8f]/25 rounded-xl">
-                                            <x-icon name="clock" class="w-8 h-8 text-[#8fbc8f] flex-shrink-0" />
+                                        <div class="flex gap-4 p-4 bg-lask-plan-break/25 rounded-xl">
+                                            <x-icon name="clock" class="w-8 h-8 text-lask-plan-break flex-shrink-0" />
                                             <div>
                                                 <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">4. ポモドーロタイマー</h4>
                                                 <p class="text-sm text-gray-600 dark:text-gray-400">25分作業 + 5分休憩で集中力を維持。</p>
