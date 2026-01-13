@@ -12,6 +12,7 @@ Route::get('/user', function (Request $request) {
 // セッション認証を使用するAPIルート
 Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/planning/generate', [PlanningController::class, 'apiGenerate']);
+    Route::get('/planning/unscheduled', [PlanningController::class, 'apiUnscheduled']);
     Route::patch('/planning/tasks/{studyPlan}/status', [PlanningController::class, 'updateStatus']);
     Route::post('/analysis/advice', [AnalysisController::class, 'apiAdvice']);
 });

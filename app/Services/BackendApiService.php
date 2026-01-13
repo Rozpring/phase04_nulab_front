@@ -121,4 +121,42 @@ class BackendApiService
     {
         return $this->fallbackEnabled;
     }
+
+    /**
+     * 未消化の課題リストを取得（サイドバー用）
+     * 
+     * Backlogからインポート済みだが、まだ「今日の計画（daily_plans）」に
+     * 登録されていない課題の一覧を取得する。
+     * 
+     * @return array|null 成功時は課題リスト、失敗時はnull
+     */
+    public function getUnscheduledIssues(): ?array
+    {
+        try {
+            $response = Http::timeout($this->timeout)
+                ->retry($this->retryTimes, $this->retrySleep)
+                ->get("{$this->baseUrl}/api/planning/unscheduled");
+
+            if ($response->successful()) {
+                Log::info('Backend API: Unscheduled issues fetched successfully');
+                return $response->json();
+            }
+
+            Log::warning('Backend API: Unscheduled issues fetch failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (Exception $e) {
+            Log::error('Backend API: Unscheduled issues error', [
+                'error' => $e->getMessage(),
+                'url' => "{$this->baseUrl}/api/planning/unscheduled",
+            ]);
+
+            return null;
+        }
+    }
 }
+

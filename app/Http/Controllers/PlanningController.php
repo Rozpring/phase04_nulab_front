@@ -205,7 +205,68 @@ class PlanningController extends Controller
 
 
     /**
+     * 未消化課題リスト取得（API）
+     * バックエンドAPIを優先し、失敗時はローカルデータにフォールバック
+     */
+    public function apiUnscheduled(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        
+        // バックエンドAPIを試行
+        $backendResponse = $this->backendApi->getUnscheduledIssues();
+        
+        if ($backendResponse !== null) {
+            // バックエンドAPIから取得成功
+            return response()->json([
+                'success' => true,
+                'data' => $backendResponse,
+                'source' => 'backend_api',
+            ]);
+        }
+        
+        // フォールバック: ローカルのImportedIssueから取得
+        if ($this->backendApi->isFallbackEnabled()) {
+            $scheduledIssueIds = StudyPlan::where('user_id', $userId)
+                ->where('scheduled_date', '>=', today())
+                ->whereNotNull('imported_issue_id')
+                ->pluck('imported_issue_id')
+                ->toArray();
+            
+            $unscheduledIssues = ImportedIssue::where('user_id', $userId)
+                ->whereNotIn('status', ['完了', '処理済み'])
+                ->whereNotIn('id', $scheduledIssueIds)
+                ->orderBy('due_date')
+                ->get()
+                ->map(function ($issue) {
+                    return [
+                        'id' => $issue->id,
+                        'issue_key' => $issue->issue_key,
+                        'summary' => $issue->summary,
+                        'data' => [
+                            'priority' => ['name' => $issue->priority],
+                            'dueDate' => $issue->due_date?->format('Y-m-d'),
+                            'estimatedHours' => $issue->estimated_hours,
+                        ],
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $unscheduledIssues,
+                'source' => 'local_fallback',
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'バックエンドAPIへの接続に失敗しました',
+            'data' => [],
+        ], 503);
+    }
+
+    /**
      * タイムライン表示
+
      */
     public function timeline(Request $request): View
     {
