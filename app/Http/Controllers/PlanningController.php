@@ -333,9 +333,12 @@ class PlanningController extends Controller
                 'id' => $plan->id,
                 'issue_key' => $plan->importedIssue?->issue_key,
                 'summary' => $plan->title,
+                'plan_type' => $plan->plan_type ?? 'work',
                 'lane_status' => $plan->status,
                 'target_date' => $plan->scheduled_date->format('Y-m-d'),
                 'end_date' => $plan->scheduled_date->format('Y-m-d'),
+                'scheduled_time' => $plan->scheduled_time?->format('H:i'),
+                'end_time' => $plan->end_time?->format('H:i'),
                 'duration_minutes' => $plan->duration_minutes,
                 'ai_comment' => $plan->ai_reason,
             ];
