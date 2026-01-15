@@ -186,6 +186,9 @@ class PlanningController extends Controller
         // 既存の予定計画をクリア
         $this->planService->clearPendingPlans($userId);
         
+        // ユーザーのImportedIssueを取得（タイトルで照合用）
+        $importedIssues = ImportedIssue::where('user_id', $userId)->get()->keyBy('summary');
+        
         // 計画を順番にスケジュール（9:00開始、重複なし）
         $currentTime = Carbon::createFromTime(9, 0);
         
@@ -193,10 +196,14 @@ class PlanningController extends Controller
             $durationMinutes = $plan['planned_minutes'] ?? 60;
             $endTime = $currentTime->copy()->addMinutes($durationMinutes);
             
+            // タイトルでImportedIssueを照合
+            $title = $plan['title'] ?? '';
+            $importedIssue = $importedIssues->get($title);
+            
             StudyPlan::create([
                 'user_id' => $userId,
-                'imported_issue_id' => null, // バックエンドのraw_issue_idとマッピングが必要な場合は別途実装
-                'title' => $plan['title'] ?? '',
+                'imported_issue_id' => $importedIssue?->id, // 照合できた場合は関連付け
+                'title' => $title,
                 'plan_type' => 'work',
                 'scheduled_date' => $targetDate,
                 'scheduled_time' => $currentTime->copy(),
@@ -494,6 +501,20 @@ class PlanningController extends Controller
         $studyPlan->update([
             'status' => $validated['status'],
         ]);
+
+        // 関連するImportedIssueのステータスも更新
+        if ($studyPlan->imported_issue_id) {
+            $importedIssue = ImportedIssue::find($studyPlan->imported_issue_id);
+            if ($importedIssue) {
+                $issueStatus = match($validated['status']) {
+                    'completed' => '完了',
+                    'in_progress' => '処理中',
+                    'skipped' => 'スキップ',
+                    default => $importedIssue->status, // plannedの場合は変更しない
+                };
+                $importedIssue->update(['status' => $issueStatus]);
+            }
+        }
 
         // バックエンドAPIに同期（失敗しても無視）
         $backendResponse = $this->backendApi->updateTaskStatus($studyPlan->id, $validated['status']);

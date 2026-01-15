@@ -276,6 +276,59 @@
         </div>
     </div>
 
+    {{-- 削除確認モーダル --}}
+    <div x-data="{ 
+        showDeleteModal: false, 
+        deleteCount: 0,
+        confirmDelete() {
+            this.showDeleteModal = false;
+            document.getElementById('delete-form').submit();
+        }
+    }" @open-delete-modal.window="showDeleteModal = true; deleteCount = $event.detail.count">
+        <template x-teleport="body">
+            <div x-show="showDeleteModal" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                 @click.self="showDeleteModal = false"
+                 style="display: none;">
+                <div x-show="showDeleteModal"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-rose-100 dark:bg-rose-900/50 rounded-full flex items-center justify-center">
+                            <x-icon name="exclamation-triangle" class="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">タスクを削除</h3>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">
+                        <span x-text="deleteCount"></span>件のタスクを削除しますか？<br>
+                        <span class="text-sm text-rose-600 dark:text-rose-400">この操作は取り消せません。</span>
+                    </p>
+                    <div class="flex gap-3 justify-end">
+                        <button type="button" @click="showDeleteModal = false"
+                                class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium">
+                            キャンセル
+                        </button>
+                        <button type="button" @click="confirmDelete()"
+                                class="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition font-medium">
+                            削除する
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <script>
         // インポート用全選択
         document.getElementById('select-all')?.addEventListener('change', function() {
@@ -308,11 +361,12 @@
             }
         }
 
-        // 削除確認ダイアログ
-        document.getElementById('delete-form')?.addEventListener('submit', function(e) {
+        // 削除ボタンクリック時にカスタムモーダルを表示
+        document.getElementById('delete-btn')?.addEventListener('click', function(e) {
+            e.preventDefault();
             const checkedCount = document.querySelectorAll('.delete-checkbox:checked').length;
-            if (!confirm(`${checkedCount}件のタスクを削除しますか？\nこの操作は取り消せません。`)) {
-                e.preventDefault();
+            if (checkedCount > 0) {
+                window.dispatchEvent(new CustomEvent('open-delete-modal', { detail: { count: checkedCount } }));
             }
         });
     </script>
