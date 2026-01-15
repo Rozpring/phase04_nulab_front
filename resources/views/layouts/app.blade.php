@@ -11,7 +11,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'LASK') }}</title>
+        <title>{{ config('app.name', 'NextLog') }}</title>
 
         {{-- テーマ初期化（ちらつき防止） --}}
         <script>

@@ -189,8 +189,14 @@ class PlanningController extends Controller
         // ユーザーのImportedIssueを取得（タイトルで照合用）
         $importedIssues = ImportedIssue::where('user_id', $userId)->get()->keyBy('summary');
         
-        // 計画を順番にスケジュール（9:00開始、重複なし）
-        $currentTime = Carbon::createFromTime(9, 0);
+        // 計画を順番にスケジュール（現在時刻以降から開始）
+        $now = Carbon::now();
+        if ($now->hour < 9) {
+            $currentTime = Carbon::createFromTime(9, 0);
+        } else {
+            // 現在時刻の次の正時から開始
+            $currentTime = $now->copy()->addHour()->startOfHour();
+        }
         
         foreach ($plans as $plan) {
             $durationMinutes = $plan['planned_minutes'] ?? 60;
@@ -327,9 +333,12 @@ class PlanningController extends Controller
                 'id' => $plan->id,
                 'issue_key' => $plan->importedIssue?->issue_key,
                 'summary' => $plan->title,
+                'plan_type' => $plan->plan_type ?? 'work',
                 'lane_status' => $plan->status,
                 'target_date' => $plan->scheduled_date->format('Y-m-d'),
                 'end_date' => $plan->scheduled_date->format('Y-m-d'),
+                'scheduled_time' => $plan->scheduled_time?->format('H:i'),
+                'end_time' => $plan->end_time?->format('H:i'),
                 'duration_minutes' => $plan->duration_minutes,
                 'ai_comment' => $plan->ai_reason,
             ];

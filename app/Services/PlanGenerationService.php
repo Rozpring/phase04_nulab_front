@@ -47,10 +47,21 @@ class PlanGenerationService
     public function generatePlans(int $userId, Collection $issues): void
     {
         $currentDate = today();
-        $startHour = 9; // 9:00開始
         $endHour = 18; // 18:00終了
-        $currentHour = $startHour;
-        $lunchBreakAdded = false;
+        
+        // 開始時刻の決定（現在時刻以降）
+        $now = Carbon::now();
+        if ($now->hour < 9) {
+            $startHour = 9;
+            $currentHour = $startHour;
+        } else {
+            // 現在時刻の次の正時から開始
+            $startHour = $now->hour + 1;
+            $currentHour = $startHour;
+        }
+        
+        // 昼休みを過ぎていたらフラグを立てる
+        $lunchBreakAdded = ($currentHour > 13);
 
         foreach ($issues as $issue) {
             $duration = ($issue->estimated_hours ?? 2) * 60; // 分単位

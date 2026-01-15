@@ -1,5 +1,5 @@
 /**
- * LASK App Store - Alpine.js グローバルストア
+ * NextLog App Store - Alpine.js グローバルストア
  * バックエンドAPI完成までの仮実装（localStorage使用）
  */
 
@@ -186,10 +186,10 @@ export function initStores(Alpine) {
                             plans.push({
                                 id: item.id,
                                 title: item.summary,
-                                plan_type: 'work', // デフォルト
+                                plan_type: item.plan_type || 'work',
                                 scheduled_date: item.target_date,
-                                scheduled_time: '09:00', // TODO: APIから取得
-                                end_time: '10:00',
+                                scheduled_time: item.scheduled_time || '--:--',
+                                end_time: item.end_time || '--:--',
                                 duration_minutes: item.duration_minutes || 60,
                                 status: item.lane_status || status,
                                 ai_reason: item.ai_comment,

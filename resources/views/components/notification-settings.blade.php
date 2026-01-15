@@ -166,7 +166,7 @@
             {{-- テスト通知ボタン --}}
             <button 
                 x-show="notifications.permission === 'granted' && notifications.enabled"
-                @click="notifications.send('テスト通知', { body: 'LASKからの通知が正常に動作しています!' }); notifications.showToast('テスト通知を送信しました', 'success')"
+                @click="notifications.send('テスト通知', { body: 'NextLogからの通知が正常に動作しています!' }); notifications.showToast('テスト通知を送信しました', 'success')"
                 class="w-full px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition"
             >
                 テスト通知を送信
