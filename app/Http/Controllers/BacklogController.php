@@ -222,5 +222,23 @@ class BacklogController extends Controller
         return redirect()->route('backlog.issues')
             ->with('success', "{$imported}件の課題をインポートしました");
     }
+
+    /**
+     * インポート済み課題を削除
+     */
+    public function deleteIssues(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'issue_ids' => ['required', 'array'],
+            'issue_ids.*' => ['integer'],
+        ]);
+
+        $deleted = ImportedIssue::where('user_id', Auth::id())
+            ->whereIn('id', $validated['issue_ids'])
+            ->delete();
+
+        return redirect()->route('backlog.issues')
+            ->with('success', "{$deleted}件の課題を削除しました");
+    }
 }
 
