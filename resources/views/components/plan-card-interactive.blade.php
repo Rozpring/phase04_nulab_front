@@ -96,8 +96,8 @@
             
             {{-- AI理由 --}}
             <template x-if="plan.ai_reason">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1 flex items-center gap-1">
-                    <x-icon name="light-bulb" class="w-3 h-3 text-amber-500" />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-start gap-1">
+                    <x-icon name="light-bulb" class="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
                     <span x-text="plan.ai_reason"></span>
                 </p>
             </template>

@@ -32,14 +32,17 @@ class BackendApiService
     /**
      * AI計画生成をバックエンドAPIに依頼
      * 
+     * @param array $issues 課題データの配列（フロントエンドのImportedIssueから整形）
      * @return array|null 成功時はレスポンスデータ、失敗時はnull
      */
-    public function generatePlanning(): ?array
+    public function generatePlanning(array $issues = []): ?array
     {
         try {
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryTimes, $this->retrySleep)
-                ->post("{$this->baseUrl}/api/planning/generate");
+                ->post("{$this->baseUrl}/api/planning/generate", [
+                    'issues' => $issues,
+                ]);
 
             if ($response->successful()) {
                 Log::info('Backend API: Planning generation successful');
@@ -196,6 +199,167 @@ class BackendApiService
             Log::error('Backend API: Daily planning error', [
                 'error' => $e->getMessage(),
                 'url' => "{$this->baseUrl}/api/planning/daily",
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * 分析サマリーを取得
+     * 
+     * @param string|null $date 日付 (Y-m-d形式、nullの場合は今日)
+     * @return array|null 成功時はサマリーデータ、失敗時はnull
+     */
+    public function getSummary(?string $date = null): ?array
+    {
+        try {
+            $params = [];
+            if ($date) {
+                $params['date'] = $date;
+            }
+            
+            $response = Http::timeout($this->timeout)
+                ->retry($this->retryTimes, $this->retrySleep)
+                ->get("{$this->baseUrl}/api/analysis/summary", $params);
+
+            if ($response->successful()) {
+                Log::info('Backend API: Analysis summary fetched successfully');
+                return $response->json();
+            }
+
+            Log::warning('Backend API: Analysis summary fetch failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (Exception $e) {
+            Log::error('Backend API: Analysis summary error', [
+                'error' => $e->getMessage(),
+                'url' => "{$this->baseUrl}/api/analysis/summary",
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * 週間進捗データを取得
+     * 
+     * @param string|null $date 日付 (Y-m-d形式、nullの場合は今日)
+     * @return array|null 成功時は週間データ、失敗時はnull
+     */
+    public function getWeeklyProgress(?string $date = null): ?array
+    {
+        try {
+            $params = [];
+            if ($date) {
+                $params['date'] = $date;
+            }
+            
+            $response = Http::timeout($this->timeout)
+                ->retry($this->retryTimes, $this->retrySleep)
+                ->get("{$this->baseUrl}/api/analysis/weekly-progress", $params);
+
+            if ($response->successful()) {
+                Log::info('Backend API: Weekly progress fetched successfully');
+                return $response->json();
+            }
+
+            Log::warning('Backend API: Weekly progress fetch failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (Exception $e) {
+            Log::error('Backend API: Weekly progress error', [
+                'error' => $e->getMessage(),
+                'url' => "{$this->baseUrl}/api/analysis/weekly-progress",
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * カテゴリ別統計を取得
+     * 
+     * @param string|null $date 日付 (Y-m-d形式、nullの場合は今日)
+     * @return array|null 成功時はカテゴリデータ、失敗時はnull
+     */
+    public function getCategories(?string $date = null): ?array
+    {
+        try {
+            $params = [];
+            if ($date) {
+                $params['date'] = $date;
+            }
+            
+            $response = Http::timeout($this->timeout)
+                ->retry($this->retryTimes, $this->retrySleep)
+                ->get("{$this->baseUrl}/api/analysis/categories", $params);
+
+            if ($response->successful()) {
+                Log::info('Backend API: Categories fetched successfully');
+                return $response->json();
+            }
+
+            Log::warning('Backend API: Categories fetch failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (Exception $e) {
+            Log::error('Backend API: Categories error', [
+                'error' => $e->getMessage(),
+                'url' => "{$this->baseUrl}/api/analysis/categories",
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * タスクステータスを更新（バックエンドに同期）
+     * 
+     * @param int $taskId タスクID
+     * @param string $status 新しいステータス
+     * @return array|null 成功時はレスポンスデータ、失敗時はnull
+     */
+    public function updateTaskStatus(int $taskId, string $status): ?array
+    {
+        try {
+            $response = Http::timeout($this->timeout)
+                ->retry($this->retryTimes, $this->retrySleep)
+                ->patch("{$this->baseUrl}/api/planning/tasks/{$taskId}/status", [
+                    'status' => $status,
+                ]);
+
+            if ($response->successful()) {
+                Log::info('Backend API: Task status updated successfully', [
+                    'task_id' => $taskId,
+                    'status' => $status,
+                ]);
+                return $response->json();
+            }
+
+            Log::warning('Backend API: Task status update failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (Exception $e) {
+            Log::error('Backend API: Task status update error', [
+                'error' => $e->getMessage(),
+                'url' => "{$this->baseUrl}/api/planning/tasks/{$taskId}/status",
             ]);
 
             return null;

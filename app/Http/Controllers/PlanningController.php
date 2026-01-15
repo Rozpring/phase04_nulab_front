@@ -124,13 +124,23 @@ class PlanningController extends Controller
             ], 400);
         }
 
-        // バックエンドAPIを試行
-        $backendResponse = $this->backendApi->generatePlanning();
+        // バックエンドAPIを試行（課題データを整形して送信）
+        $issueData = $issues->map(fn($issue) => [
+            'title' => $issue->summary,
+            'description' => $issue->description,
+            'priority' => $issue->priority,
+            'dueDate' => $issue->due_date?->format('Y-m-d'),
+            'estimatedHours' => $issue->estimated_hours,
+            'issue_key' => $issue->issue_key,
+        ])->toArray();
+
+        $backendResponse = $this->backendApi->generatePlanning($issueData);
         
         if ($backendResponse && isset($backendResponse['success']) && $backendResponse['success']) {
             // バックエンドAPIから計画を取得成功
             // バックエンドの計画をフロントエンドのStudyPlanに同期
-            $this->syncBackendPlansToLocal($userId, $backendResponse['plans'] ?? []);
+            $targetDate = $backendResponse['target_date'] ?? today()->format('Y-m-d');
+            $this->syncBackendPlansToLocal($userId, $backendResponse['plans'] ?? [], $targetDate);
             
             return response()->json([
                 'success' => true,
@@ -167,26 +177,45 @@ class PlanningController extends Controller
 
     /**
      * バックエンドAPIからの計画をローカルDBに同期
+     * @param int $userId ユーザーID
+     * @param array $plans 計画データの配列
+     * @param string $targetDate 計画の対象日（Y-m-d形式）
      */
-    private function syncBackendPlansToLocal(int $userId, array $plans): void
+    private function syncBackendPlansToLocal(int $userId, array $plans, string $targetDate): void
     {
         // 既存の予定計画をクリア
         $this->planService->clearPendingPlans($userId);
         
+        // ユーザーのImportedIssueを取得（タイトルで照合用）
+        $importedIssues = ImportedIssue::where('user_id', $userId)->get()->keyBy('summary');
+        
+        // 計画を順番にスケジュール（9:00開始、重複なし）
+        $currentTime = Carbon::createFromTime(9, 0);
+        
         foreach ($plans as $plan) {
+            $durationMinutes = $plan['planned_minutes'] ?? 60;
+            $endTime = $currentTime->copy()->addMinutes($durationMinutes);
+            
+            // タイトルでImportedIssueを照合
+            $title = $plan['title'] ?? '';
+            $importedIssue = $importedIssues->get($title);
+            
             StudyPlan::create([
                 'user_id' => $userId,
-                'imported_issue_id' => null, // バックエンドのraw_issue_idとマッピングが必要な場合は別途実装
-                'title' => $plan['title'] ?? '',
+                'imported_issue_id' => $importedIssue?->id, // 照合できた場合は関連付け
+                'title' => $title,
                 'plan_type' => 'work',
-                'scheduled_date' => $plan['target_date'] ?? today(),
-                'scheduled_time' => Carbon::createFromTime(9, 0),
-                'end_time' => Carbon::createFromTime(9, 0)->addMinutes($plan['planned_minutes'] ?? 60),
-                'duration_minutes' => $plan['planned_minutes'] ?? 60,
+                'scheduled_date' => $targetDate,
+                'scheduled_time' => $currentTime->copy(),
+                'end_time' => $endTime,
+                'duration_minutes' => $durationMinutes,
                 'priority' => $this->mapPriorityToNumber($plan['priority'] ?? '中'),
                 'ai_reason' => $plan['ai_comment'] ?? null,
                 'status' => 'planned',
             ]);
+            
+            // 次の計画の開始時刻を設定
+            $currentTime = $endTime;
         }
     }
 
@@ -266,73 +295,54 @@ class PlanningController extends Controller
 
     /**
      * 今日のタスクボード取得（API）
-     * バックエンドAPIを優先し、失敗時はローカルデータにフォールバック
+     * ローカルのStudyPlanテーブルからデータを取得
+     * （計画生成時にsyncBackendPlansToLocalでローカルDBに同期されている）
      */
     public function apiDaily(Request $request): JsonResponse
     {
         $userId = Auth::id();
         $date = $request->input('date', today()->format('Y-m-d'));
         
-        // バックエンドAPIを試行
-        $backendResponse = $this->backendApi->getDailyPlanning($date);
+        // ローカルのStudyPlanから取得
+        $plans = StudyPlan::with('importedIssue')
+            ->where('user_id', $userId)
+            ->whereDate('scheduled_date', $date)
+            ->orderBy('scheduled_time')
+            ->get();
         
-        if ($backendResponse !== null) {
-            // バックエンドAPIから取得成功
-            return response()->json([
-                'success' => true,
-                'data' => $backendResponse,
-                'source' => 'backend_api',
-            ]);
-        }
+        $lanes = [
+            'planned' => [],
+            'in_progress' => [],
+            'completed' => [],
+            'skipped' => [],
+        ];
         
-        // フォールバック: ローカルのStudyPlanから取得
-        if ($this->backendApi->isFallbackEnabled()) {
-            $plans = StudyPlan::with('importedIssue')
-                ->where('user_id', $userId)
-                ->whereDate('scheduled_date', $date)
-                ->orderBy('scheduled_time')
-                ->get();
-            
-            $lanes = [
-                'planned' => [],
-                'in_progress' => [],
-                'completed' => [],
-                'skipped' => [],
-            ];
-            
-            foreach ($plans as $plan) {
-                $laneStatus = $plan->status;
-                if (!isset($lanes[$laneStatus])) {
-                    $laneStatus = 'planned';
-                }
-                
-                $lanes[$laneStatus][] = [
-                    'id' => $plan->id,
-                    'issue_key' => $plan->importedIssue?->issue_key,
-                    'summary' => $plan->title,
-                    'lane_status' => $plan->status,
-                    'target_date' => $plan->scheduled_date->format('Y-m-d'),
-                    'end_date' => $plan->scheduled_date->format('Y-m-d'),
-                    'duration_minutes' => $plan->duration_minutes,
-                    'ai_comment' => $plan->ai_reason,
-                ];
+        foreach ($plans as $plan) {
+            $laneStatus = $plan->status;
+            if (!isset($lanes[$laneStatus])) {
+                $laneStatus = 'planned';
             }
             
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'date' => $date,
-                    'lanes' => $lanes,
-                ],
-                'source' => 'local_fallback',
-            ]);
+            $lanes[$laneStatus][] = [
+                'id' => $plan->id,
+                'issue_key' => $plan->importedIssue?->issue_key,
+                'summary' => $plan->title,
+                'lane_status' => $plan->status,
+                'target_date' => $plan->scheduled_date->format('Y-m-d'),
+                'end_date' => $plan->scheduled_date->format('Y-m-d'),
+                'duration_minutes' => $plan->duration_minutes,
+                'ai_comment' => $plan->ai_reason,
+            ];
         }
         
         return response()->json([
-            'success' => false,
-            'message' => 'バックエンドAPIへの接続に失敗しました',
-            'data' => [],
-        ], 503);
+            'success' => true,
+            'data' => [
+                'date' => $date,
+                'lanes' => $lanes,
+            ],
+            'source' => 'local_db',
+        ]);
     }
 
     /**
@@ -472,6 +482,7 @@ class PlanningController extends Controller
 
     /**
      * タスクのステータス更新（API）
+     * フロントエンドのStudyPlanを更新し、バックエンドAPIにも同期
      */
     public function updateStatus(Request $request, StudyPlan $studyPlan): JsonResponse
     {
@@ -486,14 +497,40 @@ class PlanningController extends Controller
             'status' => ['required', 'string', 'in:planned,in_progress,completed,skipped'],
         ]);
 
+        // ローカルのStudyPlanを更新
         $studyPlan->update([
             'status' => $validated['status'],
         ]);
 
-        return response()->json([
+        // 関連するImportedIssueのステータスも更新
+        if ($studyPlan->imported_issue_id) {
+            $importedIssue = ImportedIssue::find($studyPlan->imported_issue_id);
+            if ($importedIssue) {
+                $issueStatus = match($validated['status']) {
+                    'completed' => '完了',
+                    'in_progress' => '処理中',
+                    'skipped' => 'スキップ',
+                    default => $importedIssue->status, // plannedの場合は変更しない
+                };
+                $importedIssue->update(['status' => $issueStatus]);
+            }
+        }
+
+        // バックエンドAPIに同期（失敗しても無視）
+        $backendResponse = $this->backendApi->updateTaskStatus($studyPlan->id, $validated['status']);
+        
+        $response = [
             'success' => true,
             'message' => 'ステータスを更新しました',
             'plan' => $studyPlan,
-        ]);
+            'new_lane_status' => $validated['status'],
+        ];
+
+        // バックエンドからresult_statusが返された場合は追加
+        if ($backendResponse && isset($backendResponse['new_result_status'])) {
+            $response['new_result_status'] = $backendResponse['new_result_status'];
+        }
+
+        return response()->json($response);
     }
 }

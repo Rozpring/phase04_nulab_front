@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::get('backlog/projects', [BacklogController::class, 'projects'])->name('backlog.projects');
     Route::get('backlog/issues', [BacklogController::class, 'issues'])->name('backlog.issues');
     Route::post('backlog/import', [BacklogController::class, 'import'])->name('backlog.import');
+    Route::delete('backlog/issues', [BacklogController::class, 'deleteIssues'])->name('backlog.delete-issues');
 
     // 計画生成
     Route::get('planning', [PlanningController::class, 'index'])->name('planning.index');

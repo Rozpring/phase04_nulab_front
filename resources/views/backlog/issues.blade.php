@@ -153,72 +153,101 @@
                 {{-- 右側: 追加済みタスク --}}
                 <div>
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                                 <x-icon name="check-circle" class="w-6 h-6 mr-2 text-emerald-500" />
                                 追加済み
+                                <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                    {{ $importedIssues->count() }}件
+                                </span>
                             </h3>
                         </div>
-                        <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-[28rem] overflow-y-auto">
-                            @forelse ($importedIssues as $issue)
-                                <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                                    <div class="flex items-center gap-2 mb-1.5">
-                                        <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ $issue->issue_key }}</span>
-                                        @if ($issue->priority)
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                                                {{ $issue->priority === '高' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300' : '' }}
-                                                {{ $issue->priority === '中' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' : '' }}
-                                                {{ $issue->priority === '低' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : '' }}
-                                            ">
-                                                {{ $issue->priority }}
-                                            </span>
-                                        @endif
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $issue->status_color_class }}">
-                                            {{ $issue->status }}
-                                        </span>
-                                        @if ($issue->is_overdue)
-                                            <span class="text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-0.5">
-                                                <x-icon name="exclamation-circle" class="w-3 h-3" />
-                                                期限切れ
-                                            </span>
-                                        @endif
+                        <form method="POST" action="{{ route('backlog.delete-issues') }}" id="delete-form">
+                            @csrf
+                            @method('DELETE')
+                            <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-[28rem] overflow-y-auto">
+                                @forelse ($importedIssues as $issue)
+                                    <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex items-center h-5 mt-0.5">
+                                                <input 
+                                                    type="checkbox" 
+                                                    name="issue_ids[]" 
+                                                    value="{{ $issue->id }}"
+                                                    class="delete-checkbox w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-rose-500 focus:ring-rose-400"
+                                                >
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-1.5">
+                                                    <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ $issue->issue_key }}</span>
+                                                    @if ($issue->priority)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                                            {{ $issue->priority === '高' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300' : '' }}
+                                                            {{ $issue->priority === '中' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' : '' }}
+                                                            {{ $issue->priority === '低' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : '' }}
+                                                        ">
+                                                            {{ $issue->priority }}
+                                                        </span>
+                                                    @endif
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $issue->status_color_class }}">
+                                                        {{ $issue->status }}
+                                                    </span>
+                                                    @if ($issue->is_overdue)
+                                                        <span class="text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-0.5">
+                                                            <x-icon name="exclamation-circle" class="w-3 h-3" />
+                                                            期限切れ
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{{ $issue->summary }}</h4>
+                                                <div class="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    @if ($issue->due_date)
+                                                        <span class="flex items-center gap-1">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                            </svg>
+                                                            {{ $issue->due_date->year != now()->year ? $issue->due_date->format('Y/m/d') : $issue->due_date->format('m/d') }}
+                                                        </span>
+                                                    @endif
+                                                    @if ($issue->estimated_hours)
+                                                        <span class="flex items-center gap-1">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                            </svg>
+                                                            {{ $issue->estimated_hours }}h
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{{ $issue->summary }}</h4>
-                                    <div class="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                        @if ($issue->due_date)
-                                            <span class="flex items-center gap-1">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
-                                                {{ $issue->due_date->year != now()->year ? $issue->due_date->format('Y/m/d') : $issue->due_date->format('m/d') }}
-                                            </span>
-                                        @endif
-                                        @if ($issue->estimated_hours)
-                                            <span class="flex items-center gap-1">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                                {{ $issue->estimated_hours }}h
-                                            </span>
-                                        @endif
+                                @empty
+                                    <div class="p-8 text-center">
+                                        <x-icon name="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">まだ追加されたタスクはありません</p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500">左側のリストからタスクを選択して追加してください</p>
                                     </div>
-                                </div>
-                            @empty
-                                <div class="p-8 text-center">
-                                    <x-icon name="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">まだ追加されたタスクはありません</p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500">左側のリストからタスクを選択して追加してください</p>
-                                </div>
-                            @endforelse
-                        </div>
-                        @if ($importedIssues->count() > 0)
-                            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
-                                <a href="{{ route('planning.index') }}" class="w-full text-center px-4 py-2 bg-lask-accent text-white rounded-lg hover:bg-lask-accent-hover transition font-medium flex items-center justify-center gap-2">
-                                    <x-icon name="cpu-chip" class="w-4 h-4" />
-                                    AI計画を生成
-                                </a>
+                                @endforelse
                             </div>
-                        @endif
+                            @if ($importedIssues->count() > 0)
+                                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                            <input type="checkbox" id="select-all-delete" class="rounded border-gray-300 dark:border-gray-600 text-rose-500 focus:ring-rose-400">
+                                            すべて選択
+                                        </label>
+                                        <button type="submit" id="delete-btn" class="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-sm hover:bg-rose-600 transition font-medium flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                            <x-icon name="trash" class="w-4 h-4" />
+                                            <span id="delete-count">選択したタスクを削除</span>
+                                        </button>
+                                    </div>
+                                    <a href="{{ route('planning.index') }}" class="w-full text-center px-4 py-2 bg-lask-accent text-white rounded-lg hover:bg-lask-accent-hover transition font-medium flex items-center justify-center gap-2">
+                                        <x-icon name="cpu-chip" class="w-4 h-4" />
+                                        AI計画を生成
+                                    </a>
+                                </div>
+                            @endif
+                        </form>
                     </div>
 
                     {{-- クイックリンク --}}
@@ -247,10 +276,98 @@
         </div>
     </div>
 
+    {{-- 削除確認モーダル --}}
+    <div x-data="{ 
+        showDeleteModal: false, 
+        deleteCount: 0,
+        confirmDelete() {
+            this.showDeleteModal = false;
+            document.getElementById('delete-form').submit();
+        }
+    }" @open-delete-modal.window="showDeleteModal = true; deleteCount = $event.detail.count">
+        <template x-teleport="body">
+            <div x-show="showDeleteModal" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                 @click.self="showDeleteModal = false"
+                 style="display: none;">
+                <div x-show="showDeleteModal"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-rose-100 dark:bg-rose-900/50 rounded-full flex items-center justify-center">
+                            <x-icon name="exclamation-triangle" class="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">タスクを削除</h3>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">
+                        <span x-text="deleteCount"></span>件のタスクを削除しますか？<br>
+                        <span class="text-sm text-rose-600 dark:text-rose-400">この操作は取り消せません。</span>
+                    </p>
+                    <div class="flex gap-3 justify-end">
+                        <button type="button" @click="showDeleteModal = false"
+                                class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium">
+                            キャンセル
+                        </button>
+                        <button type="button" @click="confirmDelete()"
+                                class="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition font-medium">
+                            削除する
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <script>
-        document.getElementById('select-all').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('input[name="issue_ids[]"]');
+        // インポート用全選択
+        document.getElementById('select-all')?.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('#import-form input[name="issue_ids[]"]');
             checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        // 削除用全選択
+        document.getElementById('select-all-delete')?.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.delete-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateDeleteButton();
+        });
+
+        // チェックボックス変更時に削除ボタンの状態を更新
+        document.querySelectorAll('.delete-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateDeleteButton);
+        });
+
+        function updateDeleteButton() {
+            const checkedCount = document.querySelectorAll('.delete-checkbox:checked').length;
+            const deleteBtn = document.getElementById('delete-btn');
+            const deleteCount = document.getElementById('delete-count');
+            
+            if (deleteBtn) {
+                deleteBtn.disabled = checkedCount === 0;
+                deleteCount.textContent = checkedCount > 0 
+                    ? `${checkedCount}件を削除`
+                    : '選択したタスクを削除';
+            }
+        }
+
+        // 削除ボタンクリック時にカスタムモーダルを表示
+        document.getElementById('delete-btn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            const checkedCount = document.querySelectorAll('.delete-checkbox:checked').length;
+            if (checkedCount > 0) {
+                window.dispatchEvent(new CustomEvent('open-delete-modal', { detail: { count: checkedCount } }));
+            }
         });
     </script>
 </x-app-layout>
