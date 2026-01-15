@@ -112,7 +112,7 @@
             @if ($plan->ai_reason)
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1.5 leading-relaxed">
                     <x-icon name="light-bulb" class="w-3.5 h-3.5 text-lask-1 flex-shrink-0 mt-0.5" />
-                    <span class="line-clamp-2">{{ $plan->ai_reason }}</span>
+                    <span>{{ $plan->ai_reason }}</span>
                 </p>
             @endif
         </div>
