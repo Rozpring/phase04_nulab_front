@@ -1,4 +1,4 @@
-# LASK
+# NextLog
 
 Backlog連携とAI計画生成機能を持つタスク管理アプリケーション。
 

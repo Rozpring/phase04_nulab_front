@@ -1,5 +1,5 @@
 /**
- * LASK App Store - Alpine.js グローバルストア
+ * NextLog App Store - Alpine.js グローバルストア
  * バックエンドAPI完成までの仮実装（localStorage使用）
  */
 
