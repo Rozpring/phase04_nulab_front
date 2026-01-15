@@ -10,7 +10,7 @@ return [
     |
     */
 
-    'base_url' => env('BACKEND_API_URL', 'http://localhost:8081'),
+    'base_url' => env('BACKEND_API_URL', 'http://host.docker.internal:8081'),
 
     'timeout' => env('BACKEND_API_TIMEOUT', 30),
 
