@@ -16,6 +16,11 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/planning/daily', [PlanningController::class, 'apiDaily']);
     Route::patch('/planning/tasks/{studyPlan}/status', [PlanningController::class, 'updateStatus']);
     Route::post('/analysis/advice', [AnalysisController::class, 'apiAdvice']);
+    
+    // 分析統計API（バックエンドへのプロキシ）
+    Route::get('/analysis/summary', [AnalysisController::class, 'apiSummary']);
+    Route::get('/analysis/weekly-progress', [AnalysisController::class, 'apiWeeklyProgress']);
+    Route::get('/analysis/categories', [AnalysisController::class, 'apiCategories']);
 });
 
 

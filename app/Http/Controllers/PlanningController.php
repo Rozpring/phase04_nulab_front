@@ -481,6 +481,7 @@ class PlanningController extends Controller
 
     /**
      * タスクのステータス更新（API）
+     * フロントエンドのStudyPlanを更新し、バックエンドAPIにも同期
      */
     public function updateStatus(Request $request, StudyPlan $studyPlan): JsonResponse
     {
@@ -495,14 +496,26 @@ class PlanningController extends Controller
             'status' => ['required', 'string', 'in:planned,in_progress,completed,skipped'],
         ]);
 
+        // ローカルのStudyPlanを更新
         $studyPlan->update([
             'status' => $validated['status'],
         ]);
 
-        return response()->json([
+        // バックエンドAPIに同期（失敗しても無視）
+        $backendResponse = $this->backendApi->updateTaskStatus($studyPlan->id, $validated['status']);
+        
+        $response = [
             'success' => true,
             'message' => 'ステータスを更新しました',
             'plan' => $studyPlan,
-        ]);
+            'new_lane_status' => $validated['status'],
+        ];
+
+        // バックエンドからresult_statusが返された場合は追加
+        if ($backendResponse && isset($backendResponse['new_result_status'])) {
+            $response['new_result_status'] = $backendResponse['new_result_status'];
+        }
+
+        return response()->json($response);
     }
 }
