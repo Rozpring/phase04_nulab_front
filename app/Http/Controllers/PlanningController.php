@@ -186,20 +186,29 @@ class PlanningController extends Controller
         // 既存の予定計画をクリア
         $this->planService->clearPendingPlans($userId);
         
+        // 計画を順番にスケジュール（9:00開始、重複なし）
+        $currentTime = Carbon::createFromTime(9, 0);
+        
         foreach ($plans as $plan) {
+            $durationMinutes = $plan['planned_minutes'] ?? 60;
+            $endTime = $currentTime->copy()->addMinutes($durationMinutes);
+            
             StudyPlan::create([
                 'user_id' => $userId,
                 'imported_issue_id' => null, // バックエンドのraw_issue_idとマッピングが必要な場合は別途実装
                 'title' => $plan['title'] ?? '',
                 'plan_type' => 'work',
                 'scheduled_date' => $targetDate,
-                'scheduled_time' => Carbon::createFromTime(9, 0),
-                'end_time' => Carbon::createFromTime(9, 0)->addMinutes($plan['planned_minutes'] ?? 60),
-                'duration_minutes' => $plan['planned_minutes'] ?? 60,
+                'scheduled_time' => $currentTime->copy(),
+                'end_time' => $endTime,
+                'duration_minutes' => $durationMinutes,
                 'priority' => $this->mapPriorityToNumber($plan['priority'] ?? '中'),
                 'ai_reason' => $plan['ai_comment'] ?? null,
                 'status' => 'planned',
             ]);
+            
+            // 次の計画の開始時刻を設定
+            $currentTime = $endTime;
         }
     }
 
