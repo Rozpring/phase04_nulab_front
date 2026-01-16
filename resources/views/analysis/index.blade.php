@@ -382,18 +382,13 @@
                             </button>
                         </div>
                         <div class="p-4 space-y-3">
-                            {{-- 分析開始前のみ表示（サーバー側のアドバイス） --}}
+                            {{-- 分析開始前のみ表示（ボタンクリックを促す） --}}
                             <div x-show="!analysisStarted" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-                                @forelse ($advice as $item)
-                                    <div class="mb-3">
-                                        <x-advice-card :advice="$item" />
-                                    </div>
-                                @empty
-                                    <div class="text-center py-6 text-gray-500 dark:text-gray-400">
-                                        <x-icon name="cpu-chip" class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                                        <p class="text-sm">「分析を開始」ボタンをクリックしてAIアドバイスを取得してください</p>
-                                    </div>
-                                @endforelse
+                                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    <x-icon name="sparkles" class="w-12 h-12 mx-auto mb-3 text-lask-1" />
+                                    <p class="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">AIアドバイスを取得</p>
+                                    <p class="text-sm">「分析を開始」ボタンをクリックして<br>あなたに合ったアドバイスを受け取りましょう</p>
+                                </div>
                             </div>
                             
                             {{-- エラー表示 --}}
