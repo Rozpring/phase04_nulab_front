@@ -204,6 +204,20 @@ class AnalysisController extends Controller
             
             if ($backendResponse && isset($backendResponse['data']['advice'])) {
                 $apiAdvice = $backendResponse['data']['advice'];
+                $localCompletionRate = $stats['completion_rate'];
+                
+                // Gemini APIから返ってきた完了率をローカルの値で置換
+                foreach ($apiAdvice as &$item) {
+                    if (isset($item['description'])) {
+                        // 「完了率XX%」のパターンをローカルの値で置換
+                        $item['description'] = preg_replace(
+                            '/完了率\d+%/',
+                            "完了率{$localCompletionRate}%",
+                            $item['description']
+                        );
+                    }
+                }
+                unset($item);
                 
                 // 最低3件を保証（不足分をデフォルトで補填）
                 $defaultIndex = 0;
@@ -214,6 +228,7 @@ class AnalysisController extends Controller
                 return [
                     'advice' => $apiAdvice,
                     'source' => 'backend_api',
+                    'completion_rate' => $localCompletionRate,
                 ];
             }
             
