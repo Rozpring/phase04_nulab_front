@@ -103,18 +103,41 @@ class AnalysisController extends Controller
 
     /**
      * バックエンドの週間データをフロントエンド形式に変換
+     * 今日より前でデータがない場合はモックデータを追加
      */
     private function formatBackendWeeklyData(array $weeklyData): array
     {
         $dayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+        $today = now()->startOfDay();
         
-        return array_map(function ($day) use ($dayLabels) {
+        // デモ用のモックデータ（曜日ごと: 0=日, 1=月, ... 6=土）
+        $mockData = [
+            0 => ['completed' => 0, 'failed' => 0],  // 日
+            1 => ['completed' => 4, 'failed' => 1],  // 月
+            2 => ['completed' => 3, 'failed' => 0],  // 火
+            3 => ['completed' => 5, 'failed' => 1],  // 水
+            4 => ['completed' => 2, 'failed' => 1],  // 木
+            5 => ['completed' => 4, 'failed' => 0],  // 金
+            6 => ['completed' => 1, 'failed' => 0],  // 土
+        ];
+        
+        return array_map(function ($day) use ($dayLabels, $today, $mockData) {
             $date = \Carbon\Carbon::parse($day['date']);
+            $completed = $day['completed'] ?? 0;
+            $failed = $day['failed'] ?? 0;
+            
+            // 今日より前でデータがない場合はモックデータを使用
+            if ($date->lt($today) && $completed === 0 && $failed === 0) {
+                $dayOfWeek = $date->dayOfWeek;
+                $completed = $mockData[$dayOfWeek]['completed'];
+                $failed = $mockData[$dayOfWeek]['failed'];
+            }
+            
             return [
                 'day' => $dayLabels[$date->dayOfWeek],
                 'date' => $day['date'],
-                'completed' => $day['completed'] ?? 0,
-                'failed' => $day['failed'] ?? 0,
+                'completed' => $completed,
+                'failed' => $failed,
             ];
         }, $weeklyData);
     }

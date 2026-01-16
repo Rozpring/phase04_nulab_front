@@ -87,8 +87,8 @@ class AnalysisService
             ];
         }
 
-        // データが少ない場合
-        if ($issues->count() < 5) {
+        // データがない場合
+        if ($issues->count() === 0) {
             $patterns[] = [
                 'type' => 'sample_pattern',
                 'severity' => 'info',
@@ -347,7 +347,19 @@ class AnalysisService
     public function getWeeklyData(int $userId): array
     {
         $startOfWeek = now()->startOfWeek();
+        $today = now()->startOfDay();
         $data = [];
+
+        // デモ用のモックデータ（日ごとに異なる値）
+        $mockData = [
+            ['completed' => 4, 'failed' => 1],  // 月
+            ['completed' => 3, 'failed' => 0],  // 火
+            ['completed' => 5, 'failed' => 1],  // 水
+            ['completed' => 2, 'failed' => 1],  // 木
+            ['completed' => 4, 'failed' => 0],  // 金
+            ['completed' => 1, 'failed' => 0],  // 土
+            ['completed' => 0, 'failed' => 0],  // 日
+        ];
 
         for ($i = 0; $i < 7; $i++) {
             $date = $startOfWeek->copy()->addDays($i);
@@ -356,11 +368,20 @@ class AnalysisService
                 ->whereDate('scheduled_date', $date)
                 ->get();
             
+            $completed = $dayPlans->where('status', 'completed')->count();
+            $failed = $dayPlans->where('status', 'skipped')->count();
+            
+            // 今日より前でデータがない場合はモックデータを使用
+            if ($date->lt($today) && $completed === 0 && $failed === 0) {
+                $completed = $mockData[$i]['completed'];
+                $failed = $mockData[$i]['failed'];
+            }
+            
             $data[] = [
                 'day' => $date->isoFormat('ddd'),
                 'date' => $date->format('m/d'),
-                'completed' => $dayPlans->where('status', 'completed')->count(),
-                'failed' => $dayPlans->where('status', 'skipped')->count(),
+                'completed' => $completed,
+                'failed' => $failed,
                 'dayOfWeek' => $date->dayOfWeek,
             ];
         }
