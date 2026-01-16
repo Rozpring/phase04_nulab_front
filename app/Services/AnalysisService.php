@@ -124,6 +124,13 @@ class AnalysisService
                 'title' => '改善の余地あり',
                 'content' => '完了率 ' . $stats['completion_rate'] . '% です。計画を小さく分割すると完了しやすくなります。',
             ];
+        } elseif ($stats['completion_rate'] > 0) {
+            $advice[] = [
+                'icon' => 'arrow-trending-up',
+                'type' => 'action',
+                'title' => '少しずつ改善しましょう',
+                'content' => '完了率 ' . $stats['completion_rate'] . '% です。まずは小さなタスクから確実に完了させる習慣をつけましょう。',
+            ];
         }
 
         // パターンに基づくアドバイス
@@ -148,31 +155,46 @@ class AnalysisService
             }
         }
 
-        // デフォルトのアドバイス
+        // デフォルトのアドバイス（足りない分を補填）
+        $defaultAdvice = [
+            [
+                'icon' => 'clock',
+                'type' => 'tip',
+                'priority' => 'recommended',
+                'title' => 'ポモドーロテクニック',
+                'content' => '25分作業+5分休憩のサイクルで集中力を維持し、効率的に作業を進めましょう。',
+            ],
+            [
+                'icon' => 'light-bulb',
+                'type' => 'tip',
+                'priority' => 'reference',
+                'title' => '朝の計画確認',
+                'content' => '毎朝10分、今日の優先タスクを確認する習慣をつけると生産性が向上します。',
+            ],
+            [
+                'icon' => 'chart-bar',
+                'type' => 'info',
+                'priority' => 'reference',
+                'title' => '定期的な振り返り',
+                'content' => '週に一度、完了したタスクを振り返り、次週の計画に活かしましょう。',
+            ],
+        ];
+        
+        // 課題が5件未満の場合は特別なメッセージを先頭に
         if ($stats['total'] < 5) {
-            $advice = [
-                [
-                    'icon' => 'rocket-launch',
-                    'type' => 'action',
-                    'priority' => 'urgent',
-                    'title' => 'まずは課題をインポート',
-                    'content' => 'Backlogから課題を読み込んで、あなたの作業パターンを分析しましょう。',
-                ],
-                [
-                    'icon' => 'chart-bar',
-                    'type' => 'info',
-                    'priority' => 'recommended',
-                    'title' => 'AI分析について',
-                    'content' => '5件以上のデータがあれば、失敗パターンや進捗の癖を分析できます。',
-                ],
-                [
-                    'icon' => 'light-bulb',
-                    'type' => 'tip',
-                    'priority' => 'reference',
-                    'title' => 'ヒント',
-                    'content' => 'AI計画生成を使って、効率的な学習スケジュールを自動作成しましょう。',
-                ],
-            ];
+            array_unshift($advice, [
+                'icon' => 'rocket-launch',
+                'type' => 'action',
+                'priority' => 'urgent',
+                'title' => 'まずは課題をインポート',
+                'content' => 'Backlogから課題を読み込んで、あなたの作業パターンを分析しましょう。',
+            ]);
+        }
+        
+        // 最低3件のアドバイスを保証
+        $defaultIndex = 0;
+        while (count($advice) < 3 && $defaultIndex < count($defaultAdvice)) {
+            $advice[] = $defaultAdvice[$defaultIndex++];
         }
 
         return $advice;
