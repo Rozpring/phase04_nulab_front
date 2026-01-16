@@ -15,6 +15,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/planning/unscheduled', [PlanningController::class, 'apiUnscheduled']);
     Route::get('/planning/daily', [PlanningController::class, 'apiDaily']);
     Route::patch('/planning/tasks/{studyPlan}/status', [PlanningController::class, 'updateStatus']);
+    Route::patch('/planning/tasks/{studyPlan}/dates', [PlanningController::class, 'apiUpdateDates']);
     Route::post('/analysis/advice', [AnalysisController::class, 'apiAdvice']);
     
     // 分析統計API（バックエンドへのプロキシ）

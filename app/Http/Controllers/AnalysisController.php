@@ -35,21 +35,24 @@ class AnalysisController extends Controller
 
         // バックエンドが成功した場合はそのデータを使用
         if ($backendSummary && $backendWeekly) {
+            // ローカルデータも取得（アドバイス生成に使用）
+            $issues = ImportedIssue::where('user_id', $userId)->get();
+            $plans = StudyPlan::with('importedIssue')->where('user_id', $userId)->get();
+            $localStats = $this->analysisService->calculateStats($issues, $plans);
+            
             $stats = [
-                'total' => $backendSummary['total_tasks'] ?? 0,
-                'completed' => 0, // バックエンドからは直接取得できないため計算
-                'failed' => 0,
-                'in_progress' => $backendSummary['in_progress'] ?? 0,
-                'completion_rate' => $backendSummary['completion_rate'] ?? 0,
-                'failure_rate' => $backendSummary['failure_rate'] ?? 0,
+                'total' => $localStats['total'], // ローカルの課題数を使用（アドバイス生成に重要）
+                'completed' => $localStats['completed'],
+                'failed' => $localStats['failed'],
+                'in_progress' => $backendSummary['in_progress'] ?? $localStats['in_progress'],
+                'completion_rate' => $localStats['completion_rate'], // ローカルの完了率を使用
+                'failure_rate' => $backendSummary['failure_rate'] ?? $localStats['failure_rate'],
                 'by_category' => $this->formatBackendCategories($backendCategories ?? []),
             ];
             
             $weeklyData = $this->formatBackendWeeklyData($backendWeekly);
             
             // パターン検出とアドバイスはローカルで生成（バックエンドにない機能）
-            $issues = ImportedIssue::where('user_id', $userId)->get();
-            $plans = StudyPlan::with('importedIssue')->where('user_id', $userId)->get();
             $patterns = $this->analysisService->detectPatterns($issues, $plans);
             $advice = $this->analysisService->generateAdvice($patterns, $stats);
             
@@ -168,7 +171,29 @@ class AnalysisController extends Controller
         
         $cached = Cache::has($cacheKey);
         
-        $advice = Cache::remember($cacheKey, now()->addHours(1), function () use ($userId, $targetDate) {
+        // デフォルトアドバイス（足りない分を補填）
+        $defaultAdvice = [
+            [
+                'title' => 'ポモドーロテクニック',
+                'description' => '25分作業+5分休憩のサイクルで集中力を維持し、効率的に作業を進めましょう。',
+                'tag' => '推奨',
+                'type' => 'recommend',
+            ],
+            [
+                'title' => '朝の計画確認',
+                'description' => '毎朝10分、今日の優先タスクを確認する習慣をつけると生産性が向上します。',
+                'tag' => '参考',
+                'type' => 'info',
+            ],
+            [
+                'title' => '定期的な振り返り',
+                'description' => '週に一度、完了したタスクを振り返り、次週の計画に活かしましょう。',
+                'tag' => '参考',
+                'type' => 'info',
+            ],
+        ];
+        
+        $advice = Cache::remember($cacheKey, now()->addHours(1), function () use ($userId, $targetDate, $defaultAdvice) {
             // 統計データを準備
             $issues = ImportedIssue::where('user_id', $userId)->get();
             $plans = StudyPlan::where('user_id', $userId)->get();
@@ -178,8 +203,16 @@ class AnalysisController extends Controller
             $backendResponse = $this->backendApi->generateAdvice($stats);
             
             if ($backendResponse && isset($backendResponse['data']['advice'])) {
+                $apiAdvice = $backendResponse['data']['advice'];
+                
+                // 最低3件を保証（不足分をデフォルトで補填）
+                $defaultIndex = 0;
+                while (count($apiAdvice) < 3 && $defaultIndex < count($defaultAdvice)) {
+                    $apiAdvice[] = $defaultAdvice[$defaultIndex++];
+                }
+                
                 return [
-                    'advice' => $backendResponse['data']['advice'],
+                    'advice' => $apiAdvice,
                     'source' => 'backend_api',
                 ];
             }
@@ -193,8 +226,8 @@ class AnalysisController extends Controller
             }
             
             return [
-                'advice' => [],
-                'source' => 'none',
+                'advice' => $defaultAdvice,
+                'source' => 'default',
             ];
         });
         

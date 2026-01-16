@@ -365,5 +365,49 @@ class BackendApiService
             return null;
         }
     }
+
+    /**
+     * タスクの日付を更新（バックエンドに同期）
+     * 
+     * @param int $taskId タスクID
+     * @param string $startDate 開始日 (Y-m-d形式)
+     * @param string $dueDate 期限日 (Y-m-d形式)
+     * @return array|null 成功時はレスポンスデータ、失敗時はnull
+     */
+    public function updateTaskDates(int $taskId, string $startDate, string $dueDate): ?array
+    {
+        try {
+            $response = Http::timeout($this->timeout)
+                ->retry($this->retryTimes, $this->retrySleep)
+                ->patch("{$this->baseUrl}/api/planning/tasks/{$taskId}/dates", [
+                    'start_date' => $startDate,
+                    'due_date' => $dueDate,
+                ]);
+
+            if ($response->successful()) {
+                Log::info('Backend API: Task dates updated successfully', [
+                    'task_id' => $taskId,
+                    'start_date' => $startDate,
+                    'due_date' => $dueDate,
+                ]);
+                return $response->json();
+            }
+
+            Log::warning('Backend API: Task dates update failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (Exception $e) {
+            Log::error('Backend API: Task dates update error', [
+                'error' => $e->getMessage(),
+                'url' => "{$this->baseUrl}/api/planning/tasks/{$taskId}/dates",
+            ]);
+
+            return null;
+        }
+    }
 }
 
