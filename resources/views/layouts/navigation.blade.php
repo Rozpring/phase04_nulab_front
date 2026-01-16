@@ -19,13 +19,13 @@
                         <x-icon name="calendar" class="w-4 h-4 mr-1 inline" />
                         {{ __('計画') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('backlog.settings')" :active="request()->routeIs('backlog.*')">
-                        <x-icon name="link" class="w-4 h-4 mr-1 inline" />
-                        {{ __('Backlog連携') }}
-                    </x-nav-link>
                     <x-nav-link :href="route('analysis.index')" :active="request()->routeIs('analysis.*')">
                         <x-icon name="cpu-chip" class="w-4 h-4 mr-1 inline" />
                         {{ __('AI分析') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('backlog.settings')" :active="request()->routeIs('backlog.*')">
+                        <x-icon name="link" class="w-4 h-4 mr-1 inline" />
+                        {{ __('Backlog連携') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -210,13 +210,13 @@
                 <x-icon name="calendar" class="w-4 h-4 mr-1 inline" />
                 {{ __('計画') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('backlog.settings')" :active="request()->routeIs('backlog.*')">
-                <x-icon name="link" class="w-4 h-4 mr-1 inline" />
-                {{ __('Backlog連携') }}
-            </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('analysis.index')" :active="request()->routeIs('analysis.*')">
                 <x-icon name="cpu-chip" class="w-4 h-4 mr-1 inline" />
                 {{ __('AI分析') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('backlog.settings')" :active="request()->routeIs('backlog.*')">
+                <x-icon name="link" class="w-4 h-4 mr-1 inline" />
+                {{ __('Backlog連携') }}
             </x-responsive-nav-link>
         </div>
 

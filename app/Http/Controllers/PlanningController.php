@@ -177,6 +177,7 @@ class PlanningController extends Controller
 
     /**
      * バックエンドAPIからの計画をローカルDBに同期
+     * フロントエンド側で休憩時間を自動挿入
      * @param int $userId ユーザーID
      * @param array $plans 計画データの配列
      * @param string $targetDate 計画の対象日（Y-m-d形式）
@@ -191,15 +192,100 @@ class PlanningController extends Controller
         
         // 計画を順番にスケジュール（現在時刻以降から開始）
         $now = Carbon::now();
+        $startHour = 9;
         if ($now->hour < 9) {
             $currentTime = Carbon::createFromTime(9, 0);
         } else {
             // 現在時刻の次の正時から開始
             $currentTime = $now->copy()->addHour()->startOfHour();
+            $startHour = $currentTime->hour;
         }
+        
+        // 昼休みを過ぎていたらフラグを立てる
+        $lunchBreakAdded = ($currentTime->hour > 13);
+        // 最後の休憩からの経過時間（分）
+        $minutesSinceLastBreak = 0;
         
         foreach ($plans as $plan) {
             $durationMinutes = $plan['planned_minutes'] ?? 60;
+            
+            // plan_typeをバックエンドから取得（デフォルトは'work'）
+            $planType = $plan['plan_type'] ?? 'work';
+            // break, study, work, review以外の値はworkに正規化
+            if (!in_array($planType, ['break', 'study', 'work', 'review'])) {
+                $planType = 'work';
+            }
+            
+            // バックエンドから休憩が送られてきた場合はそのまま使用
+            if ($planType === 'break') {
+                $endTime = $currentTime->copy()->addMinutes($durationMinutes);
+                StudyPlan::create([
+                    'user_id' => $userId,
+                    'imported_issue_id' => null,
+                    'title' => $plan['title'] ?? '休憩',
+                    'plan_type' => 'break',
+                    'scheduled_date' => $targetDate,
+                    'scheduled_time' => $currentTime->copy(),
+                    'end_time' => $endTime,
+                    'duration_minutes' => $durationMinutes,
+                    'priority' => 1,
+                    'ai_reason' => $plan['ai_comment'] ?? '休憩時間',
+                    'status' => 'planned',
+                ]);
+                $currentTime = $endTime;
+                $minutesSinceLastBreak = 0;
+                continue;
+            }
+            
+            // 昼休みを挿入（12:00〜13:00）
+            if ($currentTime->hour >= 12 && $currentTime->hour < 13 && !$lunchBreakAdded) {
+                $lunchStart = Carbon::createFromTime(12, 0);
+                $lunchEnd = Carbon::createFromTime(13, 0);
+                
+                StudyPlan::create([
+                    'user_id' => $userId,
+                    'imported_issue_id' => null,
+                    'title' => '昼休み',
+                    'plan_type' => 'break',
+                    'scheduled_date' => $targetDate,
+                    'scheduled_time' => $lunchStart,
+                    'end_time' => $lunchEnd,
+                    'duration_minutes' => 60,
+                    'priority' => 1,
+                    'ai_reason' => '午後の作業効率を維持するための休憩時間',
+                    'status' => 'planned',
+                ]);
+                
+                $currentTime = $lunchEnd;
+                $lunchBreakAdded = true;
+                $minutesSinceLastBreak = 0;
+            }
+            
+            // 2時間（120分）以上連続作業したら小休憩を挿入
+            // ただし、昼休み前後1時間は挿入しない
+            $nearLunchBreak = ($currentTime->hour >= 11 && $currentTime->hour <= 14);
+            if ($minutesSinceLastBreak >= 120 && !$nearLunchBreak && $currentTime->hour < 17) {
+                $breakEnd = $currentTime->copy()->addMinutes(15);
+                
+                StudyPlan::create([
+                    'user_id' => $userId,
+                    'imported_issue_id' => null,
+                    'title' => '小休憩',
+                    'plan_type' => 'break',
+                    'scheduled_date' => $targetDate,
+                    'scheduled_time' => $currentTime->copy(),
+                    'end_time' => $breakEnd,
+                    'duration_minutes' => 15,
+                    'priority' => 1,
+                    'ai_reason' => '集中力を維持するための短い休憩',
+                    'status' => 'planned',
+                ]);
+                
+                $currentTime = $breakEnd;
+                $minutesSinceLastBreak = 0;
+            }
+            
+            // タスクの終了時刻を計算
             $endTime = $currentTime->copy()->addMinutes($durationMinutes);
             
             // タイトルでImportedIssueを照合
@@ -208,9 +294,9 @@ class PlanningController extends Controller
             
             StudyPlan::create([
                 'user_id' => $userId,
-                'imported_issue_id' => $importedIssue?->id, // 照合できた場合は関連付け
+                'imported_issue_id' => $importedIssue?->id,
                 'title' => $title,
-                'plan_type' => 'work',
+                'plan_type' => $planType,
                 'scheduled_date' => $targetDate,
                 'scheduled_time' => $currentTime->copy(),
                 'end_time' => $endTime,
@@ -222,6 +308,7 @@ class PlanningController extends Controller
             
             // 次の計画の開始時刻を設定
             $currentTime = $endTime;
+            $minutesSinceLastBreak += $durationMinutes;
         }
     }
 
