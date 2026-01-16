@@ -577,6 +577,53 @@ class PlanningController extends Controller
     }
 
     /**
+     * タスクの日付更新（API）
+     * PATCH /api/planning/tasks/{id}/dates
+     */
+    public function apiUpdateDates(Request $request, StudyPlan $studyPlan): JsonResponse
+    {
+        if ($studyPlan->user_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => '権限がありません',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'start_date' => 'required|date_format:Y-m-d',
+            'due_date'   => 'required|date_format:Y-m-d|after_or_equal:start_date',
+        ]);
+
+        // StudyPlanのscheduled_dateを更新（start_dateとして使用）
+        $studyPlan->update([
+            'scheduled_date' => $validated['start_date'],
+        ]);
+
+        // 関連するImportedIssueのdue_dateも更新
+        if ($studyPlan->imported_issue_id) {
+            $importedIssue = ImportedIssue::find($studyPlan->imported_issue_id);
+            if ($importedIssue) {
+                $importedIssue->update([
+                    'due_date' => $validated['due_date'],
+                ]);
+            }
+        }
+
+        // バックエンドAPIにも同期（失敗しても無視）
+        $this->backendApi->updateTaskDates($studyPlan->id, $validated['start_date'], $validated['due_date']);
+
+        return response()->json([
+            'success' => true,
+            'message' => '日付を更新しました',
+            'data' => [
+                'id' => $studyPlan->id,
+                'start_date' => $validated['start_date'],
+                'due_date' => $validated['due_date'],
+            ],
+        ]);
+    }
+
+    /**
      * タスクのステータス更新（API）
      * フロントエンドのStudyPlanを更新し、バックエンドAPIにも同期
      */

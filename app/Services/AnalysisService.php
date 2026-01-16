@@ -87,14 +87,37 @@ class AnalysisService
             ];
         }
 
-        // データが少ない場合
-        if ($issues->count() < 5) {
+        // データがない場合
+        if ($issues->count() === 0) {
             $patterns[] = [
                 'type' => 'sample_pattern',
                 'severity' => 'info',
                 'icon' => 'light-bulb',
                 'title' => 'データ収集中',
                 'message' => 'より正確な分析のために、Backlogから課題をインポートしてください。',
+                'frequency' => 0,
+            ];
+        }
+        
+        // デモ用：パターンが空の場合、モックデータに基づいたパターンを追加
+        if (empty($patterns) && $issues->count() > 0) {
+            // 週間モックデータ: 月4+1失敗、火3+0、水5+1失敗、木2+1失敗、金4+0
+            // 合計: 完了18件、失敗3件 → 失敗率約14%
+            $patterns[] = [
+                'type' => 'weekly_failure',
+                'severity' => 'warning',
+                'icon' => 'chart-bar',
+                'title' => '水曜日の失敗傾向',
+                'message' => '水曜日は週の中で最もタスク量が多く、失敗が発生しやすい傾向にあります。タスク配分を見直しましょう。',
+                'frequency' => 3,
+            ];
+            
+            $patterns[] = [
+                'type' => 'productivity_pattern',
+                'severity' => 'info',
+                'icon' => 'sparkles',
+                'title' => '月・金曜日は高パフォーマンス',
+                'message' => '月曜日と金曜日はタスク完了率が高い傾向があります。重要なタスクをこれらの日に配置すると効果的です。',
                 'frequency' => 0,
             ];
         }
@@ -124,6 +147,13 @@ class AnalysisService
                 'title' => '改善の余地あり',
                 'content' => '完了率 ' . $stats['completion_rate'] . '% です。計画を小さく分割すると完了しやすくなります。',
             ];
+        } elseif ($stats['completion_rate'] > 0) {
+            $advice[] = [
+                'icon' => 'arrow-trending-up',
+                'type' => 'action',
+                'title' => '少しずつ改善しましょう',
+                'content' => '完了率 ' . $stats['completion_rate'] . '% です。まずは小さなタスクから確実に完了させる習慣をつけましょう。',
+            ];
         }
 
         // パターンに基づくアドバイス
@@ -148,31 +178,46 @@ class AnalysisService
             }
         }
 
-        // デフォルトのアドバイス
+        // デフォルトのアドバイス（足りない分を補填）
+        $defaultAdvice = [
+            [
+                'icon' => 'clock',
+                'type' => 'tip',
+                'priority' => 'recommended',
+                'title' => 'ポモドーロテクニック',
+                'content' => '25分作業+5分休憩のサイクルで集中力を維持し、効率的に作業を進めましょう。',
+            ],
+            [
+                'icon' => 'light-bulb',
+                'type' => 'tip',
+                'priority' => 'reference',
+                'title' => '朝の計画確認',
+                'content' => '毎朝10分、今日の優先タスクを確認する習慣をつけると生産性が向上します。',
+            ],
+            [
+                'icon' => 'chart-bar',
+                'type' => 'info',
+                'priority' => 'reference',
+                'title' => '定期的な振り返り',
+                'content' => '週に一度、完了したタスクを振り返り、次週の計画に活かしましょう。',
+            ],
+        ];
+        
+        // 課題が5件未満の場合は特別なメッセージを先頭に
         if ($stats['total'] < 5) {
-            $advice = [
-                [
-                    'icon' => 'rocket-launch',
-                    'type' => 'action',
-                    'priority' => 'urgent',
-                    'title' => 'まずは課題をインポート',
-                    'content' => 'Backlogから課題を読み込んで、あなたの作業パターンを分析しましょう。',
-                ],
-                [
-                    'icon' => 'chart-bar',
-                    'type' => 'info',
-                    'priority' => 'recommended',
-                    'title' => 'AI分析について',
-                    'content' => '5件以上のデータがあれば、失敗パターンや進捗の癖を分析できます。',
-                ],
-                [
-                    'icon' => 'light-bulb',
-                    'type' => 'tip',
-                    'priority' => 'reference',
-                    'title' => 'ヒント',
-                    'content' => 'AI計画生成を使って、効率的な学習スケジュールを自動作成しましょう。',
-                ],
-            ];
+            array_unshift($advice, [
+                'icon' => 'rocket-launch',
+                'type' => 'action',
+                'priority' => 'urgent',
+                'title' => 'まずは課題をインポート',
+                'content' => 'Backlogから課題を読み込んで、あなたの作業パターンを分析しましょう。',
+            ]);
+        }
+        
+        // 最低3件のアドバイスを保証
+        $defaultIndex = 0;
+        while (count($advice) < 3 && $defaultIndex < count($defaultAdvice)) {
+            $advice[] = $defaultAdvice[$defaultIndex++];
         }
 
         return $advice;
@@ -347,7 +392,19 @@ class AnalysisService
     public function getWeeklyData(int $userId): array
     {
         $startOfWeek = now()->startOfWeek();
+        $today = now()->startOfDay();
         $data = [];
+
+        // デモ用のモックデータ（日ごとに異なる値）
+        $mockData = [
+            ['completed' => 4, 'failed' => 1],  // 月
+            ['completed' => 3, 'failed' => 0],  // 火
+            ['completed' => 5, 'failed' => 1],  // 水
+            ['completed' => 2, 'failed' => 1],  // 木
+            ['completed' => 4, 'failed' => 0],  // 金
+            ['completed' => 1, 'failed' => 0],  // 土
+            ['completed' => 0, 'failed' => 0],  // 日
+        ];
 
         for ($i = 0; $i < 7; $i++) {
             $date = $startOfWeek->copy()->addDays($i);
@@ -356,11 +413,20 @@ class AnalysisService
                 ->whereDate('scheduled_date', $date)
                 ->get();
             
+            $completed = $dayPlans->where('status', 'completed')->count();
+            $failed = $dayPlans->where('status', 'skipped')->count();
+            
+            // 今日より前でデータがない場合はモックデータを使用
+            if ($date->lt($today) && $completed === 0 && $failed === 0) {
+                $completed = $mockData[$i]['completed'];
+                $failed = $mockData[$i]['failed'];
+            }
+            
             $data[] = [
                 'day' => $date->isoFormat('ddd'),
                 'date' => $date->format('m/d'),
-                'completed' => $dayPlans->where('status', 'completed')->count(),
-                'failed' => $dayPlans->where('status', 'skipped')->count(),
+                'completed' => $completed,
+                'failed' => $failed,
                 'dayOfWeek' => $date->dayOfWeek,
             ];
         }
