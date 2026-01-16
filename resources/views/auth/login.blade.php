@@ -12,7 +12,7 @@
         {{-- Session Status --}}
         <x-auth-session-status class="mb-4" :status="session('status')" />
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" name="login-form" id="login-form" autocomplete="on">
             @csrf
 
             {{-- メールアドレス --}}
@@ -33,7 +33,7 @@
                         value="{{ old('email') }}" 
                         required 
                         autofocus 
-                        autocomplete="username"
+                        autocomplete="email"
                         placeholder="メールアドレス"
                         class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lask-accent focus:border-transparent transition"
                     >
